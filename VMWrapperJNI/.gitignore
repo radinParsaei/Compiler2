@@ -1,0 +1,7 @@
+*.o
+*VMWrapper.h
+*.dylib
+*.dll
+*.so
+static_call.cpp
+static_call_list.yml
