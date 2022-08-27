@@ -14,7 +14,7 @@ endif
 all: libVMWrapper.$(OBJEXT)
 
 VMWrapper.h: ../src/main/java/com/example/VMWrapper.java
-	javac -h . ../src/main/java/com/example/{VMWrapper.java,SyntaxTree.java}
+	javac -h . ../src/main/java/com/example/{VMWrapper.java,SyntaxTree.java,Tool.java,Utils.java,ScopeTool.java,Errors.java,Generator.java}
 	$(RM) ../src/main/java/com/example/*.class
 
 VMWrapper.o: VMWrapper.h VMWrapper.cpp

@@ -9,7 +9,7 @@ public class Main {
         VMWrapper vm = new VMWrapper();
         VMByteCodeGenerator vmByteCodeGenerator = new VMByteCodeGenerator();
         // put "Hello, World!!!" in vm's stack
-        vm.run((Object[]) new SyntaxTree.Text("Hello, World!!!").evaluate(vmByteCodeGenerator));
+        vm.run((Object[]) vmByteCodeGenerator.generate(new SyntaxTree.Text("Hello, World!!!")));
         // pop it from vm's stack and print it using System.out.println
         System.out.println(vm.pop());
     }

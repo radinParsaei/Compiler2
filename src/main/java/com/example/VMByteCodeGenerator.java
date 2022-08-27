@@ -5,13 +5,23 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class VMByteCodeGenerator extends SyntaxTree.Generator {
-    private void copyArrays(Object[] destination, Object[]... toCopy) {
-        int loc = 0;
-        for (Object[] objects : toCopy) {
-            System.arraycopy(objects, 0, destination, loc, objects.length);
-            loc += objects.length;
+import static com.example.Utils.copyArrays;
+
+public class VMByteCodeGenerator extends Generator {
+    private boolean recording = false;
+
+    public VMByteCodeGenerator(Tool... tools) {
+        super(new ScopeTool());
+        addTool(tools);
+    }
+
+    private int sizeof(Object[] code) {
+        int size = code.length;
+        if (recording) return size;
+        for (Object i : code) {
+            if (!(i instanceof Byte)) size--;
         }
+        return size;
     }
 
     private Object[] generateOperator(SyntaxTree.Operator operator, byte opCode) {
@@ -77,16 +87,20 @@ public class VMByteCodeGenerator extends SyntaxTree.Generator {
 
     @Override
     public Object generateVariable(SyntaxTree.Variable variable) {
-        return new Object[] { VMWrapper.GETVAR, variable.getVariableName() };
+        Object variableName = variable.getExtraData("id");
+        if (variableName == null) variableName = variable.getVariableName();
+        return new Object[] { VMWrapper.GETVAR, variableName };
     }
 
     @Override
     public Object generateSetVariable(SyntaxTree.SetVariable setVariable) {
+        Object variableName = setVariable.getExtraData("id");
+        if (variableName == null) variableName = setVariable.getVariableName();
         Object[] data = (Object[]) setVariable.getValue().evaluate(this);
         Object[] res = new Object[data.length + 2];
         System.arraycopy(data, 0, res, 0, data.length);
         res[data.length] = VMWrapper.SETVAR;
-        res[data.length + 1] = setVariable.getVariableName();
+        res[data.length + 1] = variableName;
         return res;
     }
 
@@ -203,5 +217,61 @@ public class VMByteCodeGenerator extends SyntaxTree.Generator {
     @Override
     public Object generateBitwiseNot(SyntaxTree.BitwiseNot bitwiseNot) {
         return generateOperator(bitwiseNot, VMWrapper.B_NOT);
+    }
+
+    @Override
+    public Object generateIf(SyntaxTree.If anIf) {
+        Object[] code = (Object[]) anIf.getCode().evaluate(this);
+        Object[] condition = (Object[]) anIf.getCondition().evaluate(this);
+        Object[] elseCode = null;
+        int elseSize = 0;
+        if (anIf.getElseCode() != null) {
+            elseCode = (Object[]) anIf.getElseCode().evaluate(this);
+            elseSize = elseCode.length + 2;
+        }
+
+        Object[] res = new Object[code.length + condition.length + 2 + elseSize];
+        copyArrays(res, 0, condition, new Object[]{VMWrapper.SKIPIFN, sizeof(code)}, code);
+        if (anIf.getElseCode() != null) {
+            res[condition.length + 1] = ((int) res[condition.length + 1]) + 1;
+            copyArrays(res, condition.length + 2 + code.length, new Object[]{VMWrapper.SKIP, sizeof(elseCode)}, elseCode);
+        }
+        return res;
+    }
+
+    @Override
+    public Object generatePrint(SyntaxTree.Print print) {
+        Object[] message = (Object[]) print.getMessage().evaluate(this);
+        Object[] res = new Object[message.length + 2];
+        copyArrays(res, 0, message);
+        res[message.length] = VMWrapper.CALLFUNC;
+        res[message.length + 1] = null;
+        return res;
+    }
+
+    @Override
+    public Object generateWhile(SyntaxTree.While aWhile) {
+        boolean isInRecordBlock = recording;
+        recording = true;
+        Object[] code = (Object[]) aWhile.getCode().evaluate(this);
+        Object[] condition = (Object[]) aWhile.getCondition().evaluate(this);
+        if (!isInRecordBlock) recording = false;
+        Object[] res;
+        if (isInRecordBlock) {
+            res = new Object[condition.length + code.length + 4];
+            copyArrays(res, 0, new Object[] { VMWrapper.SKIP, sizeof(code) } , code, condition,
+                    new Object[] { VMWrapper.SKIPIF, -(sizeof(code) + sizeof(condition) + 2) });
+        } else {
+            res = new Object[condition.length + code.length + 5];
+            copyArrays(res, 0, new Object[] { VMWrapper.REC }, code, new Object[] { VMWrapper.END },
+                    new Object[] { VMWrapper.REC }, condition, new Object[] { VMWrapper.END, VMWrapper.WHILE });
+        }
+        return res;
+    }
+
+    public Object generateFree(ScopeTool.Free free) {
+        Object variableName = free.getExtraData("id");
+        if (variableName == null) variableName = free.getVariableName();
+        return new Object[] { VMWrapper.DELVAR, variableName };
     }
 }

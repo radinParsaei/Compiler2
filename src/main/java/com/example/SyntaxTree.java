@@ -4,53 +4,32 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import static com.example.Utils.copyArrays;
 
 /**
  * Definition of code blocks shared between frontend and backend
  */
 public class SyntaxTree {
     /**
-     * Each backend needs to extend this class and override its methods to generate output(e.g. JVM class, source code, llvm IR...)
-     */
-    public static abstract class Generator {
-        public abstract Object generateNumber(Number n);
-        public abstract Object generateText(Text n);
-        public abstract Object generateBoolean(Boolean bool);
-        public abstract Object generateNull();
-        public abstract Object generateList(List list);
-        public abstract Object generateMap(Map map);
-        public abstract Object generateVariable(Variable variable);
-        public abstract Object generateSetVariable(SetVariable setVariable);
-        public abstract Object generateAdd(Add add);
-        public abstract Object generateSub(Sub sub);
-        public abstract Object generateMul(Mul mul);
-        public abstract Object generateDiv(Div div);
-        public abstract Object generateMod(Mod mod);
-        public abstract Object generatePow(Pow pow);
-        public abstract Object generateEquals(Equals equals);
-        public abstract Object generateNotEquals(NotEquals notEquals);
-        public abstract Object generateLooksEquals(LooksEquals looksEquals);
-        public abstract Object generateGreaterThan(GreaterThan greaterThan);
-        public abstract Object generateLesserThan(LesserThan lesserThan);
-        public abstract Object generateGreaterThanOrEqual(GreaterThanOrEqual greaterThanOrEqual);
-        public abstract Object generateLesserThanOrEqual(LesserThanOrEqual lesserThanOrEqual);
-        public abstract Object generateAnd(And and);
-        public abstract Object generateOr(Or or);
-        public abstract Object generateBitwiseAnd(BitwiseAnd bitwiseAnd);
-        public abstract Object generateBitwiseOr(BitwiseOr bitwiseOr);
-        public abstract Object generateLeftShift(LeftShift leftShift);
-        public abstract Object generateRightShift(RightShift rightShift);
-        public abstract Object generateXor(Xor xor);
-        public abstract Object generateNegative(Negative negative);
-        public abstract Object generateNot(Not not);
-        public abstract Object generateBitwiseNot(BitwiseNot bitwiseNot);
-    }
-
-    /**
      * The smallest block of code
      */
     public static abstract class Block {
+        private final HashMap<Object, Object> extraData = new HashMap<>(); // defined to hold extra information (namespaces, ...)
         public abstract Object evaluate(Generator generator);
+        public Value[] getValues() {
+            return null;
+        }
+        public Block[] getCodeBlocks() {
+            return null;
+        }
+
+        public Object getExtraData(Object key) {
+            return extraData.get(key);
+        }
+
+        public void setExtraData(Object key, Object value) {
+            extraData.put(key, value);
+        }
     }
 
     /**
@@ -170,6 +149,14 @@ public class SyntaxTree {
         public Object evaluate(Generator generator) {
             return generator.generateList(this);
         }
+
+        @Override
+        public Value[] getValues() {
+            ArrayList<Value> values = (ArrayList<Value>) getData();
+            Value[] v = new Value[values.size()];
+            v = values.toArray(v);
+            return v;
+        }
     }
 
     /**
@@ -183,6 +170,18 @@ public class SyntaxTree {
         @Override
         public Object evaluate(Generator generator) {
             return generator.generateMap(this);
+        }
+
+        @Override
+        public Value[] getValues() {
+            HashMap<Value, Value> values = (HashMap<Value, Value>) getData();
+            Value[] res = new Value[values.size() * 2];
+            int i = 0;
+            for (java.util.Map.Entry<Value, Value> entry : values.entrySet()) {
+                res[i++] = entry.getKey();
+                res[i++] = entry.getValue();
+            }
+            return res;
         }
     }
 
@@ -226,6 +225,7 @@ public class SyntaxTree {
         private String variableName;
         private Value instance;
         private Value value;
+        private boolean isDeclaration;
 
         public String getVariableName() {
             return variableName;
@@ -251,6 +251,15 @@ public class SyntaxTree {
             this.value = value;
         }
 
+        public boolean isDeclaration() {
+            return isDeclaration;
+        }
+
+        public SetVariable setDeclaration(boolean declaration) {
+            isDeclaration = declaration;
+            return this;
+        }
+
         public SetVariable(String variableName, Value value) {
             this.variableName = variableName;
             this.value = value;
@@ -259,6 +268,11 @@ public class SyntaxTree {
         @Override
         public Object evaluate(Generator generator) {
             return generator.generateSetVariable(this);
+        }
+
+        @Override
+        public Value[] getValues() {
+            return new Value[] { value };
         }
     }
 
@@ -281,6 +295,11 @@ public class SyntaxTree {
 
         public Value getValue2() {
             return value2;
+        }
+
+        @Override
+        public Value[] getValues() {
+            return new Value[] { value1, value2 };
         }
     }
 
@@ -490,6 +509,215 @@ public class SyntaxTree {
         @Override
         public Object evaluate(Generator generator) {
             return generator.generateBitwiseNot(this);
+        }
+    }
+    // this class will be removed (replaced with native function calls)
+    public static class Print extends Block {
+        private Value message;
+
+        public Print(Value message) {
+            this.message = message;
+        }
+
+        public Value getMessage() {
+            return message;
+        }
+
+        public void setMessage(Value message) {
+            this.message = message;
+        }
+
+        @Override
+        public Object evaluate(Generator generator) {
+            return generator.generatePrint(this);
+        }
+
+        @Override
+        public Value[] getValues() {
+            return new Value[] { message };
+        }
+    }
+
+    public static class ControlFLowBlock extends Block {
+        private Blocks code;
+
+        public ControlFLowBlock(Block... code) {
+            setExtraData("locals", true);
+            this.code = new Blocks(code);
+        }
+
+        public Block getCode() {
+            return code;
+        }
+
+        public void setCode(Block... code) {
+            this.code = new Blocks(code);
+        }
+
+        public void addCodeBlock(Block... block) {
+            code = new Blocks((Blocks) code, block);
+        }
+
+        @Override
+        public Object evaluate(Generator generator) {
+            return null;
+        }
+    }
+
+    /**
+     * Block representing an if statement
+     */
+    public static class If extends ControlFLowBlock {
+        private Value condition;
+        private Block elseCode;
+
+        public If(Value condition, Block... code) {
+            super(code);
+            this.condition = condition;
+        }
+
+        public Value getCondition() {
+            return condition;
+        }
+
+        public void setCondition(Value condition) {
+            this.condition = condition;
+        }
+
+        public Block getElseCode() {
+            return elseCode;
+        }
+
+        public If setElseCode(Block... elseCode) {
+            this.elseCode = new Blocks(elseCode);
+            return this;
+        }
+
+        @Override
+        public Object evaluate(Generator generator) {
+            return generator.generateIf(this);
+        }
+
+        @Override
+        public Value[] getValues() {
+            return new Value[] { condition };
+        }
+
+        @Override
+        public Block[] getCodeBlocks() {
+            if (elseCode == null) {
+                return new Block[] { getCode() };
+            } else {
+                return new Block[] { getCode(), elseCode };
+            }
+        }
+    }
+
+    /**
+     * Block representing a while statement
+     */
+    public static class While extends ControlFLowBlock {
+        private Value condition;
+
+        public While(Value condition, Block... code) {
+            super(code);
+            this.condition = condition;
+        }
+
+        public Value getCondition() {
+            return condition;
+        }
+
+        public void setCondition(Value condition) {
+            this.condition = condition;
+        }
+
+        @Override
+        public Object evaluate(Generator generator) {
+            return generator.generateWhile(this);
+        }
+
+        @Override
+        public Value[] getValues() {
+            return new Value[] { condition };
+        }
+
+        @Override
+        public Block[] getCodeBlocks() {
+            return new Block[] { getCode() };
+        }
+    }
+
+    public static class Blocks extends Block {
+        private Block[] blocks;
+
+        public Blocks(Block... blocks) {
+            this.blocks = blocks;
+        }
+
+        public Blocks(Blocks code, Block... block) {
+            Block[] blocks = new Block[code.getCodeBlocks().length + block.length];
+            copyArrays(blocks, 0, code.getCodeBlocks(), block);
+            this.blocks = blocks;
+        }
+
+        public Block[] getBlocks() {
+            return blocks;
+        }
+
+        public void setBlocks(Block... blocks) {
+            this.blocks = blocks;
+        }
+
+        public void addCodeBlock(Block... code) {
+            Block[] res = new Block[code.length + blocks.length];
+            copyArrays(res, 0, blocks, code);
+            blocks = res;
+        }
+
+        @Override
+        public Object evaluate(Generator generator) {
+            ArrayList<Object> code = new ArrayList<>();
+            for (Block i : blocks) {
+                code.addAll(Arrays.asList((Object[]) i.evaluate(generator)));
+            }
+            Object[] res = new Object[code.size()];
+            res = code.toArray(res);
+            return res;
+        }
+
+        @Override
+        public Block[] getCodeBlocks() {
+            return blocks;
+        }
+    }
+
+    /**
+     * block representing a value that needs to be calculated, but the result of it is not important (e.g. function calls).
+     */
+    public static class ValueAsProgram extends Block {
+        Value value;
+
+        public ValueAsProgram(Value value) {
+            this.value = value;
+        }
+
+        public Value getValue() {
+            return value;
+        }
+
+        public void setValue(Value value) {
+            this.value = value;
+        }
+
+        @Override
+        public Value[] getValues() {
+            return new Value[] { value };
+        }
+
+        @Override
+        public Object evaluate(Generator generator) {
+            return value.evaluate(generator);
         }
     }
 }

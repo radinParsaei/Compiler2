@@ -14,60 +14,61 @@ public class VMWrapper {
     public static final byte POW = 7;
     public static final byte SETVAR = 8;
     public static final byte GETVAR = 9;
-    public static final byte REC = 10;
-    public static final byte END = 11;
-    public static final byte SKIPIF = 12;
-    public static final byte SKIPIFN = 13;
-    public static final byte WHILE = 14;
-    public static final byte NEQ = 15;
-    public static final byte EQ = 16;
-    public static final byte GT = 17;
-    public static final byte GE = 18;
-    public static final byte LT = 19;
-    public static final byte LE = 20;
-    public static final byte LEQ = 21;
-    public static final byte AND = 22;
-    public static final byte OR = 23;
-    public static final byte B_AND = 24;
-    public static final byte B_OR = 25;
-    public static final byte B_NOT = 26;
-    public static final byte NOT = 27;
-    public static final byte LSHIFT = 28;
-    public static final byte RSHIFT = 29;
-    public static final byte XOR = 30;
-    public static final byte NEGATE = 31;
-    public static final byte POP = 32;
-    public static final byte CREATE_ARR = 33;
-    public static final byte GET = 34;
-    public static final byte SET = 35;
-    public static final byte CREATE_MAP = 36;
-    public static final byte MKFUNC = 37;
-    public static final byte CALLFUNC = 38;
-    public static final byte GETPARAM = 39;
-    public static final byte CONTINUE = 40;
-    public static final byte BREAK = 41;
-    public static final byte RETURN = 42;
-    public static final byte WHILET = 43;
-    public static final byte SKIP = 44;
-    public static final byte CREATE_CLASS = 45;
-    public static final byte CREATE_INSTANCE = 46;
-    public static final byte CALLFUNCFROMINS = 47;
-    public static final byte CALLMETHOD = 48;
-    public static final byte THIS = 49;
-    public static final byte GETPTRTOLASTFUNC = 50;
-    public static final byte IS = 51;
-    public static final byte INCREASE = 52;
-    public static final byte DECREASE = 53;
-    public static final byte INPLACE_MUL = 54;
-    public static final byte INPLACE_DIV = 55;
-    public static final byte INPLACE_MOD = 56;
-    public static final byte INPLACE_POW = 57;
-    public static final byte INPLACE_AND = 58;
-    public static final byte INPLACE_OR = 59;
-    public static final byte INPLACE_LSHIFT = 60;
-    public static final byte INPLACE_RSHIFT = 61;
-    public static final byte INPLACE_XOR = 62;
-    public static final byte DLCALL = 63;
+    public static final byte DELVAR = 10;
+    public static final byte REC = 11;
+    public static final byte END = 12;
+    public static final byte SKIPIF = 13;
+    public static final byte SKIPIFN = 14;
+    public static final byte WHILE = 15;
+    public static final byte NEQ = 16;
+    public static final byte EQ = 17;
+    public static final byte GT = 18;
+    public static final byte GE = 19;
+    public static final byte LT = 20;
+    public static final byte LE = 21;
+    public static final byte LEQ = 22;
+    public static final byte AND = 23;
+    public static final byte OR = 24;
+    public static final byte B_AND = 25;
+    public static final byte B_OR = 26;
+    public static final byte B_NOT = 27;
+    public static final byte NOT = 28;
+    public static final byte LSHIFT = 29;
+    public static final byte RSHIFT = 30;
+    public static final byte XOR = 31;
+    public static final byte NEGATE = 32;
+    public static final byte POP = 33;
+    public static final byte CREATE_ARR = 34;
+    public static final byte GET = 35;
+    public static final byte SET = 36;
+    public static final byte CREATE_MAP = 37;
+    public static final byte MKFUNC = 38;
+    public static final byte CALLFUNC = 39;
+    public static final byte GETPARAM = 40;
+    public static final byte CONTINUE = 41;
+    public static final byte BREAK = 42;
+    public static final byte RETURN = 43;
+    public static final byte WHILET = 44;
+    public static final byte SKIP = 45;
+    public static final byte CREATE_CLASS = 46;
+    public static final byte CREATE_INSTANCE = 47;
+    public static final byte CALLFUNCFROMINS = 48;
+    public static final byte CALLMETHOD = 49;
+    public static final byte THIS = 50;
+    public static final byte GETPTRTOLASTFUNC = 51;
+    public static final byte IS = 52;
+    public static final byte INCREASE = 53;
+    public static final byte DECREASE = 54;
+    public static final byte INPLACE_MUL = 55;
+    public static final byte INPLACE_DIV = 56;
+    public static final byte INPLACE_MOD = 57;
+    public static final byte INPLACE_POW = 58;
+    public static final byte INPLACE_AND = 59;
+    public static final byte INPLACE_OR = 60;
+    public static final byte INPLACE_LSHIFT = 61;
+    public static final byte INPLACE_RSHIFT = 62;
+    public static final byte INPLACE_XOR = 63;
+    public static final byte DLCALL = 64;
 
     private final int vm;
 
@@ -212,7 +213,7 @@ public class VMWrapper {
     /**
      * Disassemble a set of opcodes
      */
-    public String disassemble(Object... objects) {
+    public static String disassemble(Object... objects) {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < objects.length; i++) {
             if (objects[i] instanceof Byte) {
@@ -252,11 +253,13 @@ public class VMWrapper {
      * Check if an opcode needs a parameter
      */
     public static boolean needsParameter(int opcode) {
-        return opcode == PUT || opcode == GETVAR || opcode == SETVAR || opcode == CREATE_ARR || opcode == CREATE_MAP ||
-                opcode == INCREASE || opcode == MKFUNC || opcode == CALLFUNC || opcode == GETPARAM || opcode == SKIPIFN ||
-                opcode == SKIP || opcode == CREATE_CLASS || opcode == CREATE_INSTANCE || opcode == CALLFUNCFROMINS ||
-                opcode == CALLMETHOD || opcode == IS || opcode == DECREASE || opcode == INPLACE_MUL || opcode == INPLACE_DIV ||
-                opcode == INPLACE_MOD || opcode == INPLACE_POW || opcode == INPLACE_AND || opcode == INPLACE_OR ||
-                opcode == INPLACE_LSHIFT || opcode == INPLACE_RSHIFT || opcode == INPLACE_XOR || opcode == DLCALL;
+        return opcode == PUT || opcode == GETVAR || opcode == SETVAR || opcode == DELVAR || opcode == CREATE_ARR ||
+                opcode == CREATE_MAP || opcode == INCREASE || opcode == MKFUNC || opcode == CALLFUNC ||
+                opcode == GETPARAM || opcode == SKIPIFN || opcode == SKIPIF || opcode == SKIP ||
+                opcode == CREATE_CLASS || opcode == CREATE_INSTANCE || opcode == CALLFUNCFROMINS ||
+                opcode == CALLMETHOD || opcode == IS || opcode == DECREASE || opcode == INPLACE_MUL ||
+                opcode == INPLACE_DIV || opcode == INPLACE_MOD || opcode == INPLACE_POW || opcode == INPLACE_AND ||
+                opcode == INPLACE_OR || opcode == INPLACE_LSHIFT || opcode == INPLACE_RSHIFT || opcode == INPLACE_XOR ||
+                opcode == DLCALL;
     }
 }
