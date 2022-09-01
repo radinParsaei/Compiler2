@@ -10,4 +10,8 @@ public class Errors {
         Utils.printError("Tried to modify the value of an undefined variable ", "\"", variableName, "\"");
         Utils.exit(1);
     }
+
+    public static void syntaxError(int i, String line) {
+
+    }
 }

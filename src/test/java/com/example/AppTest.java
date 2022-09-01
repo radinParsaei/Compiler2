@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 /**
  * Unit test for the compiler.
  */
-public class AppTest 
+public class AppTest
 {
     /**
      * Test VMWrapper
@@ -129,7 +129,7 @@ public class AppTest
      */
     @Test
     public void testNamespace() {
-        Object[] ifElse = (Object[]) new VMByteCodeGenerator().generate(new SyntaxTree.If(
+        Object[] ifElse = (Object[]) new VMByteCodeGenerator(false).generate(new SyntaxTree.If(
                 new SyntaxTree.Boolean(true),
                 new SyntaxTree.SetVariable("msg", new SyntaxTree.Text("Hello")).setDeclaration(true),
                 new SyntaxTree.Print(new SyntaxTree.Variable("msg"))
@@ -184,21 +184,21 @@ public class AppTest
             // }
             // a
             VMWrapper vm = new VMWrapper();
-            Object[] program = (Object[]) new VMByteCodeGenerator().generate(new SyntaxTree.Blocks(
+            Object[] program = (Object[]) new VMByteCodeGenerator(false).generate(new SyntaxTree.Blocks(
                     new SyntaxTree.SetVariable("a", new SyntaxTree.Number(30)).setDeclaration(true),
                     new SyntaxTree.If(new SyntaxTree.Boolean(true),
-                            new SyntaxTree.ValueAsProgram(new SyntaxTree.Variable("a")),
+                            new SyntaxTree.Variable("a"),
                             new SyntaxTree.SetVariable("a", new SyntaxTree.Number(10)).setDeclaration(true),
                             new SyntaxTree.SetVariable("b", new SyntaxTree.Number(10)).setDeclaration(true),
                             new SyntaxTree.If(new SyntaxTree.Boolean(true),
                                     new SyntaxTree.SetVariable("b", new SyntaxTree.Number(20)),
                                     new SyntaxTree.SetVariable("a", new SyntaxTree.Number(40)).setDeclaration(true),
-                                    new SyntaxTree.ValueAsProgram(new SyntaxTree.Variable("a")),
-                                    new SyntaxTree.ValueAsProgram(new SyntaxTree.Variable("b"))
+                                    new SyntaxTree.Variable("a"),
+                                    new SyntaxTree.Variable("b")
                             ),
-                            new SyntaxTree.ValueAsProgram(new SyntaxTree.Variable("b"))
-                    ).setElseCode(new SyntaxTree.ValueAsProgram(new SyntaxTree.Variable("a"))),
-                    new SyntaxTree.ValueAsProgram(new SyntaxTree.Variable("a"))
+                            new SyntaxTree.Variable("b")
+                    ).setElseCode(new SyntaxTree.Variable("a")),
+                    new SyntaxTree.Variable("a")
             ));
             vm.run(program);
             assertEquals(new SyntaxTree.Number(30), vm.pop());
@@ -224,12 +224,12 @@ public class AppTest
             }
         */
         // stack should be like [1, 2, 3, 4, 5, 6, 7, 8, 9]
-        Object[] program = (Object[]) new VMByteCodeGenerator().generate(
+        Object[] program = (Object[]) new VMByteCodeGenerator(false).generate(
                 new SyntaxTree.Blocks(
                         new SyntaxTree.SetVariable("i", new SyntaxTree.Number(0)).setDeclaration(true),
                         new SyntaxTree.While(
                                 new SyntaxTree.LesserThan(new SyntaxTree.Variable("i"), new SyntaxTree.Number(10)),
-                                new SyntaxTree.ValueAsProgram(new SyntaxTree.Variable("i")),
+                                new SyntaxTree.Variable("i"),
                                 new SyntaxTree.SetVariable("i",
                                         new SyntaxTree.Add(new SyntaxTree.Variable("i"), new SyntaxTree.Number(1)))
                         )
@@ -258,7 +258,7 @@ public class AppTest
             }
         */
         // stack should be like [1, 2, 3, 4, 5, 6, 7, 8, 9]
-        Object[] program = (Object[]) new VMByteCodeGenerator().generate(
+        Object[] program = (Object[]) new VMByteCodeGenerator(false).generate(
                 new SyntaxTree.Blocks(
                         new SyntaxTree.SetVariable("i", new SyntaxTree.Number(0)).setDeclaration(true),
                         new SyntaxTree.While(

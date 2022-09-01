@@ -51,9 +51,17 @@ public class SyntaxTree {
             return getData() + "";
         }
 
+        public Object evaluateValue(Generator generator) {
+            return getData() + "";
+        }
+
         @Override
         public Object evaluate(Generator generator) {
-            return getData() + "";
+            if (getExtraData("unneededResult") != null) {
+                return generator.generatePop(this);
+            } else {
+                return evaluateValue(generator);
+            }
         }
 
         @Override
@@ -85,8 +93,12 @@ public class SyntaxTree {
             setData(number);
         }
 
+        public Number(String number) {
+            setData(new BigDecimal(number));
+        }
+
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateNumber(this);
         }
     }
@@ -100,7 +112,7 @@ public class SyntaxTree {
         }
 
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateText(this);
         }
     }
@@ -114,7 +126,7 @@ public class SyntaxTree {
         }
 
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateBoolean(this);
         }
     }
@@ -128,7 +140,7 @@ public class SyntaxTree {
         }
 
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateNull();
         }
     }
@@ -146,7 +158,7 @@ public class SyntaxTree {
         }
 
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateList(this);
         }
 
@@ -168,7 +180,7 @@ public class SyntaxTree {
         }
 
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateMap(this);
         }
 
@@ -213,7 +225,7 @@ public class SyntaxTree {
         }
 
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateVariable(this);
         }
     }
@@ -280,14 +292,14 @@ public class SyntaxTree {
      * Class representing all operators (e.g. *, +, >>, ^, !)
      */
     public static abstract class Operator extends Value {
-        protected final Value value1;
-        protected final Value value2;
+        private final Value value1;
+        private final Value value2;
         public Operator(Value value1, Value value2) {
             this.value1 = value1;
             this.value2 = value2;
         }
         @Override
-        public abstract Object evaluate(Generator generator);
+        public abstract Object evaluateValue(Generator generator);
 
         public Value getValue1() {
             return value1;
@@ -308,7 +320,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateAdd(this);
         }
     }
@@ -317,7 +329,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateSub(this);
         }
     }
@@ -326,7 +338,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateMul(this);
         }
     }
@@ -336,7 +348,7 @@ public class SyntaxTree {
         }
 
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateDiv(this);
         }
     }
@@ -345,7 +357,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateMod(this);
         }
     }
@@ -354,7 +366,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generatePow(this);
         }
     }
@@ -363,7 +375,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateEquals(this);
         }
     }
@@ -372,7 +384,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateNotEquals(this);
         }
     }
@@ -381,7 +393,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateLooksEquals(this);
         }
     }
@@ -390,7 +402,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateGreaterThan(this);
         }
     }
@@ -399,7 +411,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateLesserThan(this);
         }
     }
@@ -408,7 +420,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateGreaterThanOrEqual(this);
         }
     }
@@ -417,7 +429,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateLesserThanOrEqual(this);
         }
     }
@@ -426,7 +438,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateAnd(this);
         }
     }
@@ -435,7 +447,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateOr(this);
         }
     }
@@ -444,7 +456,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateBitwiseAnd(this);
         }
     }
@@ -453,7 +465,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateBitwiseOr(this);
         }
     }
@@ -462,7 +474,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateLeftShift(this);
         }
     }
@@ -471,7 +483,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateRightShift(this);
         }
     }
@@ -480,7 +492,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateXor(this);
         }
     }
@@ -489,7 +501,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateNegative(this);
         }
     }
@@ -498,7 +510,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateNot(this);
         }
     }
@@ -507,7 +519,7 @@ public class SyntaxTree {
             super(value1, value2);
         }
         @Override
-        public Object evaluate(Generator generator) {
+        public Object evaluateValue(Generator generator) {
             return generator.generateBitwiseNot(this);
         }
     }
@@ -689,35 +701,6 @@ public class SyntaxTree {
         @Override
         public Block[] getCodeBlocks() {
             return blocks;
-        }
-    }
-
-    /**
-     * block representing a value that needs to be calculated, but the result of it is not important (e.g. function calls).
-     */
-    public static class ValueAsProgram extends Block {
-        Value value;
-
-        public ValueAsProgram(Value value) {
-            this.value = value;
-        }
-
-        public Value getValue() {
-            return value;
-        }
-
-        public void setValue(Value value) {
-            this.value = value;
-        }
-
-        @Override
-        public Value[] getValues() {
-            return new Value[] { value };
-        }
-
-        @Override
-        public Object evaluate(Generator generator) {
-            return value.evaluate(generator);
         }
     }
 }

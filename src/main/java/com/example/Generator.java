@@ -44,6 +44,7 @@ public abstract class Generator {
     public abstract Object generatePrint(SyntaxTree.Print print);
     public abstract Object generateWhile(SyntaxTree.While aWhile);
     public abstract Object generateFree(ScopeTool.Free free);
+    public abstract Object generatePop(SyntaxTree.Value value);
 
     public void addTool(Tool... tool) {
         tools.addAll(Arrays.asList(tool));
@@ -56,12 +57,23 @@ public abstract class Generator {
 
     private void runTools(SyntaxTree.Block block) {
         for (Tool tool : tools) {
+            if (block.getExtraData("parent") == null && block instanceof SyntaxTree.Value) {
+                block.setExtraData("unneededResult", true); // result of this block is unneeded and should be popped out from the stack
+                tool.processValue((SyntaxTree.Value) block, null);
+            }
             if (block.getCodeBlocks() != null) {
                 for (SyntaxTree.Block block1 : block.getCodeBlocks()) {
                     block1.setExtraData("parent", block);
-                    tool.processBlock(block1, block);
-                    runTools(block1);
-                    tool.finalizeBlock(block1, block);
+                    if (block1 instanceof SyntaxTree.Value) { // in case there was a value inside the list of blocks (such as function calls)
+                        block1.setExtraData("unneededResult", true); // result of this block is unneeded and should be popped out from the stack
+                        tool.processValue((SyntaxTree.Value) block1, block);
+                        runTools(block1);
+                        tool.finalizeValue((SyntaxTree.Value) block1, block);
+                    } else {
+                        tool.processBlock(block1, block);
+                        runTools(block1);
+                        tool.finalizeBlock(block1, block);
+                    }
                 }
             }
             if (block.getValues() != null) {
@@ -71,6 +83,9 @@ public abstract class Generator {
                     runTools(value);
                     tool.finalizeValue(value, block);
                 }
+            }
+            if (block.getExtraData("parent") == null && block instanceof SyntaxTree.Value) {
+                tool.finalizeValue((SyntaxTree.Value) block, null);
             }
         }
     }

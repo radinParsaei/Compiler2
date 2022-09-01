@@ -9,10 +9,17 @@ import static com.example.Utils.copyArrays;
 
 public class VMByteCodeGenerator extends Generator {
     private boolean recording = false;
+    private boolean generatePops = true;
 
     public VMByteCodeGenerator(Tool... tools) {
         super(new ScopeTool());
         addTool(tools);
+    }
+
+    public VMByteCodeGenerator(boolean generatePops, Tool... tools) {
+        super(new ScopeTool());
+        addTool(tools);
+        this.generatePops = generatePops;
     }
 
     private int sizeof(Object[] code) {
@@ -273,5 +280,13 @@ public class VMByteCodeGenerator extends Generator {
         Object variableName = free.getExtraData("id");
         if (variableName == null) variableName = free.getVariableName();
         return new Object[] { VMWrapper.DELVAR, variableName };
+    }
+
+    @Override
+    public Object generatePop(SyntaxTree.Value value) {
+        if (generatePops)
+            return new Object[] { value.evaluateValue(this), VMWrapper.POP };
+        else
+            return value.evaluateValue(this);
     }
 }
