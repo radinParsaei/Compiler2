@@ -555,7 +555,8 @@ public class SyntaxTree {
 
         public ControlFLowBlock(Block... code) {
             setExtraData("locals", true);
-            this.code = new Blocks(code);
+            if (code.length == 1 && code[0] instanceof Blocks) this.code = (Blocks) code[0];
+            else this.code = new Blocks(code);
         }
 
         public Block getCode() {

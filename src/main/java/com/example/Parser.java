@@ -64,13 +64,14 @@ public class Parser {
 	// Replace the previous model with newName and store the output of lambda in its object.
 	public void replace(String model, String newName, CompilerLambda lambda, String... includedRemovedObjects) {
 		List<String> included = Arrays.asList(includedRemovedObjects);
-		String map = this.getMap(includedRemovedObjects) + " ";
-		Pattern	pattern = Pattern.compile(model + " ");
+		String map = " " + this.getMap(includedRemovedObjects) + " ";
+		Pattern	pattern = Pattern.compile(" " + model + " ");
 		Matcher matcher = pattern.matcher(map);
 		if (!matcher.find()) {
 			return ;
 		}
-		String matched = matcher.group(0);
+		String matched = matcher.group(0).substring(1);
+		map = map.substring(1);
 		int index;
 		index = map.indexOf(matched);
 		int listIndex = 0;
@@ -110,6 +111,7 @@ public class Parser {
 		}
 		listIndex = tmp;
 		Token t = new Token(newName, saveTexts? text.toString():null);
+		t.setLine(tmpTokens.get(0).getLine());
 		tokens.add(listIndex, t);
 		Parser parser = new Parser(tmpTokens);
 		parser.parent = this;
@@ -141,5 +143,19 @@ public class Parser {
 
 	public ArrayList<Token> getTokens() {
 		return tokens;
+	}
+
+	public boolean contains(String token) {
+		for (Token t : tokens) {
+			if (Objects.equals(t.getName(), token)) return true;
+		}
+		return false;
+	}
+
+	public int findFirst(String token) {
+		for (int i = 0; i < tokens.size(); i++) {
+			if (Objects.equals(tokens.get(i).getName(), token)) return i;
+		}
+		return -1;
 	}
 }

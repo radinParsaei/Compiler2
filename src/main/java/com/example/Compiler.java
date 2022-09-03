@@ -35,7 +35,18 @@ public class Compiler {
         lexer.add("OP2", "\\-|\\+"); // operators with priority 2
         lexer.add("OP3", "\\|\\||\\||and|&&|&|or|\\^|>>|<<"); // operators with priority 3
         lexer.add("COMP", "!=|==|<=|>=|<|>"); // comparison operators
+        // while (keyword)
+        lexer.add("WHILE", "while ");
+        // if (keyword)
+        lexer.add("IF", "if ");
+        // else (keyword)
+        lexer.add("ELSEIF", "else if ");
+        lexer.add("ELSE", "else");
+
         lexer.add("IGNORE", " |\t+");
+        // brackets
+        lexer.add("LEFT_BRACE", "\\{");
+        lexer.add("RIGHT_BRACE", "\\}");
     }
 
     public void afterLex(Parser result) {
@@ -54,6 +65,10 @@ public class Compiler {
         tokens.replace("expression COMP expression", "expression", SyntaxTreeBinder::comparisonOperators);
         tokens.replace("expression OP3 expression", "expression", SyntaxTreeBinder::operationsWithPriority3);
         tokens.replace("PRINT expression", "program", SyntaxTreeBinder::print);
+        tokens.replace("IF expression LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::ifStatement);
+        tokens.replace("program ELSEIF expression LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::elseIfStatement);
+        tokens.replace("program ELSE LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::elseStatement);
+        tokens.replace("WHILE expression LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::whileStatement);
         tokens.replace("program( (NEWLINE|SEMICOLON) program)+", "program", SyntaxTreeBinder::programs, "NEWLINE");
     }
 

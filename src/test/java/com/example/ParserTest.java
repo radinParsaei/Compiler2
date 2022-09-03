@@ -85,4 +85,41 @@ public class ParserTest {
                 ((SyntaxTree.Equals) ((SyntaxTree.NotEquals) program).getValue1()).getValue2().getData());
         assertEquals(true, ((SyntaxTree.NotEquals) program).getValue2().getData());
     }
+
+
+    /**
+     * Test if statement
+     */
+    @Test
+    public void testIf() {
+        SyntaxTree.Block program = CompilerMain.compile(new Compiler("if true { } else { print 10 }"));
+        assertTrue(program instanceof SyntaxTree.If);
+        assertEquals(0, ((SyntaxTree.If) program).getCode().getCodeBlocks().length);
+        assertEquals(1, ((SyntaxTree.If) program).getElseCode().getCodeBlocks().length);
+        assertTrue(((SyntaxTree.If) program).getElseCode().getCodeBlocks()[0] instanceof SyntaxTree.Print);
+        assertTrue(((SyntaxTree.If) program).getCondition() instanceof SyntaxTree.Boolean);
+
+        program = CompilerMain.compile(new Compiler("if true { print 30 } else if false { } else if true { print 20 } else {  }"));
+        assertTrue(program instanceof SyntaxTree.If);
+        assertEquals(1, ((SyntaxTree.If) program).getCode().getCodeBlocks().length);
+        assertTrue(((SyntaxTree.If) program).getElseCode().getCodeBlocks()[0] instanceof SyntaxTree.If);
+        assertTrue(((SyntaxTree.If) ((SyntaxTree.If) program).getElseCode().getCodeBlocks()[0]).getElseCode()
+                .getCodeBlocks()[0] instanceof SyntaxTree.If);
+    }
+
+    /**
+     * Test while statement
+     */
+    @Test
+    public void testWhile() {
+        SyntaxTree.Block program = CompilerMain.compile(new Compiler("while true { print 10 }"));
+        assertTrue(program instanceof SyntaxTree.While);
+        assertEquals(1, ((SyntaxTree.While) program).getCode().getCodeBlocks().length);
+        assertTrue(((SyntaxTree.While) program).getCode().getCodeBlocks()[0] instanceof SyntaxTree.Print);
+        assertTrue(((SyntaxTree.While) program).getCondition() instanceof SyntaxTree.Boolean);
+
+        program = CompilerMain.compile(new Compiler("while true {}"));
+        assertTrue(program instanceof SyntaxTree.While);
+        assertEquals(0, ((SyntaxTree.While) program).getCode().getCodeBlocks().length);
+    }
 }

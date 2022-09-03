@@ -128,4 +128,57 @@ public class SyntaxTreeBinder {
         }
         return blocks;
     }
+
+    public static SyntaxTree.Block ifStatement(Parser parser) {
+        SyntaxTree.Block tmp = parser.getTokens().get(3).getObject();
+        return new SyntaxTree.If((SyntaxTree.Value) parser.getTokens().get(1).getObject(),
+                tmp != null? tmp : new SyntaxTree.Blocks());
+    }
+
+    public static SyntaxTree.Block whileStatement(Parser parser) {
+        SyntaxTree.Block tmp = parser.getTokens().get(3).getObject();
+        return new SyntaxTree.While((SyntaxTree.Value) parser.getTokens().get(1).getObject(),
+                tmp != null? tmp : new SyntaxTree.Blocks());
+    }
+
+    public static SyntaxTree.Block elseIfStatement(Parser parser) {
+        if (parser.getTokens().get(0).getObject() instanceof SyntaxTree.If) {
+            SyntaxTree.If tmp = (SyntaxTree.If) parser.getTokens().get(0).getObject();
+            SyntaxTree.Block program = parser.getTokens().get(4).getObject();
+            if (program == null) program = new SyntaxTree.Blocks();
+            if (tmp.getExtraData("else") != null) {
+                Errors.useOfElseIfAfterElse(parser.getTokens().get(1).getLine());
+                return null;
+            }
+            SyntaxTree.If lastElseIf = tmp;
+            if (tmp.getExtraData("lastElseIf") != null) {
+                lastElseIf = ((SyntaxTree.If) tmp.getExtraData("lastElseIf"));
+            }
+            SyntaxTree.If statement = new SyntaxTree.If((SyntaxTree.Value) parser.getTokens().get(2).getObject(), program);
+            tmp.setExtraData("lastElseIf", statement);
+            lastElseIf.setElseCode(statement);
+            return tmp;
+        } else {
+            Errors.invalidUseOfElseIfStatement(parser.getTokens().get(0).getLine());
+            return null;
+        }
+    }
+
+    public static SyntaxTree.Block elseStatement(Parser parser) {
+        if (parser.getTokens().get(0).getObject() instanceof SyntaxTree.If) {
+            SyntaxTree.If tmp = (SyntaxTree.If) parser.getTokens().get(0).getObject();
+            SyntaxTree.Block program = parser.getTokens().get(3).getObject();
+            if (program == null) program = new SyntaxTree.Blocks();
+            SyntaxTree.If lastElseIf = tmp;
+            if (tmp.getExtraData("lastElseIf") != null) {
+                lastElseIf = ((SyntaxTree.If) tmp.getExtraData("lastElseIf"));
+            }
+            tmp.setExtraData("else", true);
+            lastElseIf.setElseCode(program);
+            return tmp;
+        } else {
+            Errors.invalidUseOfElseStatement(parser.getTokens().get(0).getLine());
+            return null;
+        }
+    }
 }
