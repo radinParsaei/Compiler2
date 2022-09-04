@@ -3,6 +3,7 @@ package com.example;
 import org.junit.Assume;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import static org.junit.Assert.*;
@@ -266,10 +267,10 @@ public class AppTest
                                 new SyntaxTree.While(new SyntaxTree.NotEquals(new SyntaxTree.Mod(
                                         new SyntaxTree.Variable("i"), new SyntaxTree.Number(2)),
                                         new SyntaxTree.Number(0)),
-                                            new SyntaxTree.SetVariable("i",
-                                                    new SyntaxTree.Add(new SyntaxTree.Variable("i"),
-                                                            new SyntaxTree.Number(1)))
-                                        ),
+                                        new SyntaxTree.SetVariable("i",
+                                                new SyntaxTree.Add(new SyntaxTree.Variable("i"),
+                                                        new SyntaxTree.Number(1)))
+                                ),
                                 new SyntaxTree.Print(new SyntaxTree.Variable("i")),
                                 new SyntaxTree.SetVariable("i",
                                         new SyntaxTree.Add(new SyntaxTree.Variable("i"), new SyntaxTree.Number(1)))
@@ -283,6 +284,36 @@ public class AppTest
                 VMWrapper.CALLFUNC, null, VMWrapper.GETVAR, "i", VMWrapper.PUT, 1.0, VMWrapper.ADD,
                 VMWrapper.SETVAR, "i", VMWrapper.END, VMWrapper.REC, VMWrapper.GETVAR, "i", VMWrapper.PUT, 10.0,
                 VMWrapper.LT, VMWrapper.END, VMWrapper.WHILE
+        }, program);
+    }
+
+    /**
+     * test functions
+     */
+    @Test
+    public void testFunction() {
+        /*
+            func sub(a, b) {
+                var res = a - b
+                print(res)
+            }
+
+            sub(2, 1)
+        */
+        // stack should be like [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        Object[] program = (Object[]) new VMByteCodeGenerator().generate(new SyntaxTree.Blocks(
+                new SyntaxTree.Function("sub",
+                        new SyntaxTree.SetVariable("res", new SyntaxTree.Sub(
+                                new SyntaxTree.Variable("a"), new SyntaxTree.Variable("b")))
+                                .setDeclaration(true),
+                        new SyntaxTree.Print(new SyntaxTree.Variable("res"))
+                ).withArgs("a", "b"),
+                new SyntaxTree.CallFunction("sub", new SyntaxTree.Number(2), new SyntaxTree.Number(1))
+        ));
+        assertArrayEquals(new Object[] {
+                VMWrapper.REC, VMWrapper.GETPARAM, 1, VMWrapper.GETPARAM, 2, VMWrapper.SUB, VMWrapper.SETVAR, 0,
+                VMWrapper.GETVAR, 0, VMWrapper.CALLFUNC, null, VMWrapper.DELVAR, 0, VMWrapper.END, VMWrapper.PUT, 2,
+                VMWrapper.MKFUNC, "sub", VMWrapper.PUT, 2.0, VMWrapper.PUT, 1.0, VMWrapper.CALLFUNC, "sub", VMWrapper.POP
         }, program);
     }
 }

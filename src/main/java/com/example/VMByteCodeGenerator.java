@@ -95,7 +95,13 @@ public class VMByteCodeGenerator extends Generator {
     @Override
     public Object generateVariable(SyntaxTree.Variable variable) {
         Object variableName = variable.getExtraData("id");
-        if (variableName == null) variableName = variable.getVariableName();
+        if (variableName == null) {
+            variableName = variable.getVariableName();
+        } else if ((int) variableName < 0) {
+            // negative numbers are for function parameters
+            // func f(a, b) -> access to "a" will be represented using -1 and "b" using -2
+            return new Object[] { VMWrapper.GETPARAM, - ((int) variableName) };
+        }
         return new Object[] { VMWrapper.GETVAR, variableName };
     }
 
@@ -284,9 +290,39 @@ public class VMByteCodeGenerator extends Generator {
 
     @Override
     public Object generatePop(SyntaxTree.Value value) {
-        if (generatePops)
-            return new Object[] { value.evaluateValue(this), VMWrapper.POP };
-        else
+        if (generatePops) {
+            Object[] val = (Object[]) value.evaluateValue(this);
+            Object[] res = new Object[val.length + 1];
+            copyArrays(res, 0, val, new Object[] { VMWrapper.POP });
+            return res;
+        } else {
             return value.evaluateValue(this);
+        }
+    }
+
+    @Override
+    public Object generateFunc(SyntaxTree.Function function) {
+        recording = true;
+        Object[] code = (Object[]) function.getCode().evaluate(this);
+        Object[] res = new Object[code.length + 6];
+        copyArrays(res, 0, new Object[] { VMWrapper.REC }, code, new Object[] { VMWrapper.END },
+                new Object[] { VMWrapper.PUT, function.getArgs().length, VMWrapper.MKFUNC, function.getFunctionName() });
+        recording = false;
+        return res;
+    }
+
+    @Override
+    public Object generateCall(SyntaxTree.CallFunction callFunction) {
+        ArrayList<Object> res = new ArrayList<>();
+        SyntaxTree.Value[] values = callFunction.getArgs();
+        for (SyntaxTree.Value value : values) {
+            res.addAll(Arrays.asList((Object[]) value.evaluate(this)));
+        }
+        res.add(VMWrapper.CALLFUNC);
+        res.add(callFunction.getFunctionName());
+
+        Object[] finalResult = new Object[res.size()];
+        finalResult = res.toArray(finalResult);
+        return finalResult;
     }
 }

@@ -84,6 +84,14 @@ public class ScopeTool extends Tool {
             info.get(pParent).put(((SyntaxTree.SetVariable) block).getVariableName(), id);
         } else if (block instanceof SyntaxTree.Blocks) {
             if (!info.containsKey(block)) info.put(block, new HashMap<>());
+            if (parent != null) {
+                int i = 0;
+                if (parent.getExtraData("args") != null) {
+                    for (String arg : (String[]) parent.getExtraData("args")) {
+                        info.get(block).put(arg, --i);
+                    }
+                }
+            }
             while (parent != null) {
                 if (parent.getExtraData("locals") != null) {
                     if (info.containsKey(pParent))

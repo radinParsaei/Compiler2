@@ -704,4 +704,65 @@ public class SyntaxTree {
             return blocks;
         }
     }
+
+    public static class Function extends ControlFLowBlock {
+        private final String functionName;
+
+        public Function(String functionName, Block... code) {
+            super(code);
+            this.functionName = functionName;
+            setExtraData("args", new String[] {});
+        }
+
+        public Function withArgs(String... args) {
+            setExtraData("args", args);
+            return this;
+        }
+
+        public String[] getArgs() {
+            return (String[]) getExtraData("args");
+        }
+
+        public String getFunctionName() {
+            return functionName;
+        }
+
+        @Override
+        public Object evaluate(Generator generator) {
+            return generator.generateFunc(this);
+        }
+
+        @Override
+        public Block[] getCodeBlocks() {
+            return new Block[] { getCode() };
+        }
+    }
+
+    public static class CallFunction extends Value {
+        private final String functionName;
+        private final Value[] args;
+
+        public CallFunction(String functionName, Value... args) {
+            this.functionName = functionName;
+            this.args = args;
+        }
+
+        public String getFunctionName() {
+            return functionName;
+        }
+
+        public Value[] getArgs() {
+            return args;
+        }
+
+        @Override
+        public Object evaluateValue(Generator generator) {
+            return generator.generateCall(this);
+        }
+
+        @Override
+        public Value[] getValues() {
+            return args;
+        }
+    }
 }

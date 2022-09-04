@@ -45,6 +45,8 @@ public abstract class Generator {
     public abstract Object generateWhile(SyntaxTree.While aWhile);
     public abstract Object generateFree(ScopeTool.Free free);
     public abstract Object generatePop(SyntaxTree.Value value);
+    public abstract Object generateFunc(SyntaxTree.Function function);
+    public abstract Object generateCall(SyntaxTree.CallFunction callFunction);
 
     public void addTool(Tool... tool) {
         tools.addAll(Arrays.asList(tool));
