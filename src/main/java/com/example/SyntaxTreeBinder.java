@@ -4,7 +4,7 @@ package com.example;
  * this class will help "Compiler" convert tokens to SyntaxTree
  */
 public class SyntaxTreeBinder {
-    private static final SyntaxTree.Block nullInstance = new SyntaxTree.Null();
+    private static final SyntaxTree.Value nullInstance = new SyntaxTree.Null();
 
     // NUM (e.g. 1, 2, 1234)
     public static SyntaxTree.Block numberExpression(Parser parser) {
@@ -122,6 +122,14 @@ public class SyntaxTreeBinder {
     public static SyntaxTree.Block programs(Parser parser) {
         parser.purge("SEMICOLON");
         parser.purge("NEWLINE");
+        // In order to prevent having a lot of nested, unnecessary blocks
+        if (parser.getTokens().get(0).getObject() instanceof SyntaxTree.Blocks) {
+            for (int i = 1; i < parser.getTokens().size(); i++) {
+                ((SyntaxTree.Blocks) parser.getTokens().get(0).getObject())
+                        .addCodeBlock(parser.getTokens().get(i).getObject());
+            }
+            return parser.getTokens().get(0).getObject();
+        }
         SyntaxTree.Blocks blocks = new SyntaxTree.Blocks();
         for (Token token : parser.getTokens()) {
             blocks.addCodeBlock(token.getObject());
@@ -180,5 +188,65 @@ public class SyntaxTreeBinder {
             Errors.invalidUseOfElseStatement(parser.getTokens().get(0).getLine());
             return null;
         }
+    }
+
+    public static SyntaxTree.Block variable(Parser parser) {
+        return new SyntaxTree.Variable(parser.getTokens().get(0).getText());
+    }
+
+    public static SyntaxTree.Block variableDeclaration(Parser parser) {
+        return new SyntaxTree.SetVariable(parser.getTokens().get(1).getText(), nullInstance).setDeclaration(true);
+    }
+
+    public static SyntaxTree.Block setVariable(Parser parser) {
+        boolean isDeclaration = parser.contains("VAR"); // var a = ...
+        parser.purge("VAR");
+        return new SyntaxTree.SetVariable(parser.getTokens().get(0).getText(), nullInstance).setDeclaration(isDeclaration);
+    }
+
+    public static SyntaxTree.Block setVariable1(Parser parser) {
+        SyntaxTree.SetVariable res = (SyntaxTree.SetVariable) parser.getTokens().get(0).getObject();
+        res.setValue((SyntaxTree.Value) parser.getTokens().get(1).getObject());
+        return res;
+    }
+
+    public static SyntaxTree.Block functionDeclaration(Parser parser) {
+        String[] args = new String[parser.count("ID") - 1];
+        int i = parser.findAfter(parser.findFirst("ID") + 1, "ID");
+        int j = 0;
+        while (i != -1) {
+            args[j++] = parser.getTokens().get(i).getText();
+            i = parser.findAfter(i + 1, "ID");
+        }
+        return new SyntaxTree.Function(parser.getTokens().get(1).getText()).withArgs(args);
+    }
+
+    public static SyntaxTree.Block functionDeclaration1(Parser parser) {
+        SyntaxTree.Function function = (SyntaxTree.Function) parser.getTokens().get(0).getObject();
+        SyntaxTree.Block code = parser.getTokens().get(1).getObject();
+        if (code == null) code = new SyntaxTree.Blocks();
+        function.setCode(code);
+        return function;
+    }
+
+    public static SyntaxTree.Block callFunction(Parser parser) {
+        return new SyntaxTree.CallFunction(parser.getTokens().get(0).getText());
+    }
+
+    public static SyntaxTree.Block callFunction1(Parser parser) {
+        SyntaxTree.CallFunction callFunction = (SyntaxTree.CallFunction) parser.getTokens().get(0).getObject();
+        SyntaxTree.Value[] args = new SyntaxTree.Value[parser.count("expression")];
+        int i = parser.findFirst("expression");
+        int j = 0;
+        while (i != -1) {
+            args[j++] = (SyntaxTree.Value) parser.getTokens().get(i).getObject();
+            i = parser.findAfter(i + 1, "expression");
+        }
+        callFunction.setArgs(args);
+        return callFunction;
+    }
+
+    public static SyntaxTree.Block valueAsProgram(Parser parser) {
+        return parser.getTokens().get(0).getObject();
     }
 }

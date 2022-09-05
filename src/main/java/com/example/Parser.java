@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Parser {
-	private static class RemovedObjectsPair {
+    private static class RemovedObjectsPair {
 		private Integer index;
 		private final Token token;
 
@@ -157,5 +157,20 @@ public class Parser {
 			if (Objects.equals(tokens.get(i).getName(), token)) return i;
 		}
 		return -1;
+	}
+
+	public int findAfter(int i, String token) {
+		for (; i < tokens.size(); i++) {
+			if (Objects.equals(tokens.get(i).getName(), token)) return i;
+		}
+		return -1;
+	}
+
+	public int count(String name) {
+		int count = 0;
+		for (Token token : tokens) {
+			if (token.getName().equals(name)) count++;
+		}
+		return count;
 	}
 }

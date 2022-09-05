@@ -26,8 +26,8 @@ public class Compiler {
         // Null
         lexer.add("NULL", "null");
         // print (Will be removed)
-        lexer.add("PRINT", "print");
-        // print (Will be removed)
+        lexer.add("PRINT", "print ");
+        // semicolon
         lexer.add("SEMICOLON", ";");
         // operators
         lexer.add("EXPONENTIATION", "\\*\\*"); // exponentiation
@@ -35,6 +35,7 @@ public class Compiler {
         lexer.add("OP2", "\\-|\\+"); // operators with priority 2
         lexer.add("OP3", "\\|\\||\\||and|&&|&|or|\\^|>>|<<"); // operators with priority 3
         lexer.add("COMP", "!=|==|<=|>=|<|>"); // comparison operators
+        lexer.add("SET", "=");
         // while (keyword)
         lexer.add("WHILE", "while ");
         // if (keyword)
@@ -47,6 +48,17 @@ public class Compiler {
         // brackets
         lexer.add("LEFT_BRACE", "\\{");
         lexer.add("RIGHT_BRACE", "\\}");
+        // parenthesis
+        lexer.add("LEFT_PARENTHESIS", "\\(");
+        lexer.add("RIGHT_PARENTHESIS", "\\)");
+        // var (keyword)
+        lexer.add("VAR", "var ");
+        // func (keyword)
+        lexer.add("FUNC", "func ");
+        // comma
+        lexer.add("COMMA", ",");
+        // identifier (e.g. variable name)
+        lexer.add("ID", "([A-Za-z]*\\d*_*)+");
     }
 
     public void afterLex(Parser result) {
@@ -59,17 +71,28 @@ public class Compiler {
         tokens.replace("TXT", "expression", SyntaxTreeBinder::textExpression);
         tokens.replace("BOOL", "expression", SyntaxTreeBinder::boolExpression);
         tokens.replace("NULL", "expression", SyntaxTreeBinder::nullExpression);
+        tokens.replace("(VAR )?ID SET", "variable_set", SyntaxTreeBinder::setVariable);
+        tokens.replace("VAR ID", "program", SyntaxTreeBinder::variableDeclaration);
+        tokens.replace("FUNC ID LEFT_PARENTHESIS( ID( COMMA ID)*)? RIGHT_PARENTHESIS LEFT_BRACE",
+                "declare_function", SyntaxTreeBinder::functionDeclaration);
+        tokens.replace("ID LEFT_PARENTHESIS", "call_function", SyntaxTreeBinder::callFunction);
+        tokens.replace("ID", "expression", SyntaxTreeBinder::variable);
         tokens.replace("expression EXPONENTIATION expression", "expression", SyntaxTreeBinder::exponentiation);
         tokens.replace("expression OP1 expression", "expression", SyntaxTreeBinder::operationsWithPriority1);
         tokens.replace("expression OP2 expression", "expression", SyntaxTreeBinder::operationsWithPriority2);
         tokens.replace("expression COMP expression", "expression", SyntaxTreeBinder::comparisonOperators);
         tokens.replace("expression OP3 expression", "expression", SyntaxTreeBinder::operationsWithPriority3);
+        tokens.replace("call_function (expression (COMMA expression )*)?RIGHT_PARENTHESIS",
+                "expression", SyntaxTreeBinder::callFunction1);
         tokens.replace("PRINT expression", "program", SyntaxTreeBinder::print);
+        tokens.replace("variable_set expression", "program", SyntaxTreeBinder::setVariable1);
         tokens.replace("IF expression LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::ifStatement);
         tokens.replace("program ELSEIF expression LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::elseIfStatement);
         tokens.replace("program ELSE LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::elseStatement);
         tokens.replace("WHILE expression LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::whileStatement);
+        tokens.replace("declare_function( program)? RIGHT_BRACE", "program", SyntaxTreeBinder::functionDeclaration1);
         tokens.replace("program( (NEWLINE|SEMICOLON) program)+", "program", SyntaxTreeBinder::programs, "NEWLINE");
+        tokens.replace("expression", "program", SyntaxTreeBinder::valueAsProgram);
     }
 
     public SyntaxTree.Block afterParse(Parser result) {

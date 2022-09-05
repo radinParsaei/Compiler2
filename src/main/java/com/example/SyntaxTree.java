@@ -559,7 +559,7 @@ public class SyntaxTree {
             else this.code = new Blocks(code);
         }
 
-        public Block getCode() {
+        public Blocks getCode() {
             return code;
         }
 
@@ -582,7 +582,7 @@ public class SyntaxTree {
      */
     public static class If extends ControlFLowBlock {
         private Value condition;
-        private Block elseCode;
+        private Blocks elseCode;
 
         public If(Value condition, Block... code) {
             super(code);
@@ -597,7 +597,7 @@ public class SyntaxTree {
             this.condition = condition;
         }
 
-        public Block getElseCode() {
+        public Blocks getElseCode() {
             return elseCode;
         }
 
@@ -740,7 +740,7 @@ public class SyntaxTree {
 
     public static class CallFunction extends Value {
         private final String functionName;
-        private final Value[] args;
+        private Value[] args;
 
         public CallFunction(String functionName, Value... args) {
             this.functionName = functionName;
@@ -753,6 +753,10 @@ public class SyntaxTree {
 
         public Value[] getArgs() {
             return args;
+        }
+
+        public void setArgs(Value... args) {
+            this.args = args;
         }
 
         @Override

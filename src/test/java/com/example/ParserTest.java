@@ -4,8 +4,7 @@ import org.junit.Test;
 
 import java.math.BigDecimal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Unit test for the compiler (Parser).
@@ -18,11 +17,11 @@ public class ParserTest {
     public void testNumber() {
         SyntaxTree.Block program = CompilerMain.compile(new Compiler("10"));
         assertTrue(program instanceof SyntaxTree.Number);
-        assertEquals(new BigDecimal("10"), ((SyntaxTree.Number) program).getData());
+        assertEquals(new SyntaxTree.Number("10"), ((SyntaxTree.Number) program).getData());
 
         program = CompilerMain.compile(new Compiler("1234.9876"));
         assertTrue(program instanceof SyntaxTree.Number);
-        assertEquals(new BigDecimal("1234.9876"), ((SyntaxTree.Number) program).getData());
+        assertEquals(new SyntaxTree.Number("1234.9876"), ((SyntaxTree.Number) program).getData());
     }
 
     /**
@@ -94,17 +93,17 @@ public class ParserTest {
     public void testIf() {
         SyntaxTree.Block program = CompilerMain.compile(new Compiler("if true { } else { print 10 }"));
         assertTrue(program instanceof SyntaxTree.If);
-        assertEquals(0, ((SyntaxTree.If) program).getCode().getCodeBlocks().length);
-        assertEquals(1, ((SyntaxTree.If) program).getElseCode().getCodeBlocks().length);
-        assertTrue(((SyntaxTree.If) program).getElseCode().getCodeBlocks()[0] instanceof SyntaxTree.Print);
+        assertEquals(0, ((SyntaxTree.If) program).getCode().getBlocks().length);
+        assertEquals(1, ((SyntaxTree.If) program).getElseCode().getBlocks().length);
+        assertTrue(((SyntaxTree.If) program).getElseCode().getBlocks()[0] instanceof SyntaxTree.Print);
         assertTrue(((SyntaxTree.If) program).getCondition() instanceof SyntaxTree.Boolean);
 
         program = CompilerMain.compile(new Compiler("if true { print 30 } else if false { } else if true { print 20 } else {  }"));
         assertTrue(program instanceof SyntaxTree.If);
         assertEquals(1, ((SyntaxTree.If) program).getCode().getCodeBlocks().length);
-        assertTrue(((SyntaxTree.If) program).getElseCode().getCodeBlocks()[0] instanceof SyntaxTree.If);
-        assertTrue(((SyntaxTree.If) ((SyntaxTree.If) program).getElseCode().getCodeBlocks()[0]).getElseCode()
-                .getCodeBlocks()[0] instanceof SyntaxTree.If);
+        assertTrue(((SyntaxTree.If) program).getElseCode().getBlocks()[0] instanceof SyntaxTree.If);
+        assertTrue(((SyntaxTree.If) ((SyntaxTree.If) program).getElseCode().getBlocks()[0]).getElseCode()
+                .getBlocks()[0] instanceof SyntaxTree.If);
     }
 
     /**
@@ -114,12 +113,75 @@ public class ParserTest {
     public void testWhile() {
         SyntaxTree.Block program = CompilerMain.compile(new Compiler("while true { print 10 }"));
         assertTrue(program instanceof SyntaxTree.While);
-        assertEquals(1, ((SyntaxTree.While) program).getCode().getCodeBlocks().length);
-        assertTrue(((SyntaxTree.While) program).getCode().getCodeBlocks()[0] instanceof SyntaxTree.Print);
+        assertEquals(1, ((SyntaxTree.While) program).getCode().getBlocks().length);
+        assertTrue(((SyntaxTree.While) program).getCode().getBlocks()[0] instanceof SyntaxTree.Print);
         assertTrue(((SyntaxTree.While) program).getCondition() instanceof SyntaxTree.Boolean);
 
         program = CompilerMain.compile(new Compiler("while true {}"));
         assertTrue(program instanceof SyntaxTree.While);
-        assertEquals(0, ((SyntaxTree.While) program).getCode().getCodeBlocks().length);
+        assertEquals(0, ((SyntaxTree.While) program).getCode().getBlocks().length);
+    }
+
+    /**
+     * Test variables
+     */
+    @Test
+    public void testVariable() {
+        SyntaxTree.Block program = CompilerMain.compile(new Compiler("var a = 10\n" +
+                "a = 20\n" +
+                "print a\n" +
+                "var b"));
+        assertTrue(program instanceof SyntaxTree.Blocks);
+        assertEquals(4, ((SyntaxTree.Blocks) program).getBlocks().length);
+        assertTrue(((SyntaxTree.Blocks) program).getBlocks()[0] instanceof SyntaxTree.SetVariable);
+        assertTrue(((SyntaxTree.SetVariable) ((SyntaxTree.Blocks) program).getBlocks()[0]).isDeclaration());
+        assertEquals("a", ((SyntaxTree.SetVariable) ((SyntaxTree.Blocks) program).getBlocks()[0])
+                .getVariableName());
+        assertEquals(new SyntaxTree.Number("10"),
+                ((SyntaxTree.SetVariable) ((SyntaxTree.Blocks) program).getBlocks()[0]).getValue());
+
+        assertTrue(((SyntaxTree.Blocks) program).getBlocks()[1] instanceof SyntaxTree.SetVariable);
+        assertFalse(((SyntaxTree.SetVariable) ((SyntaxTree.Blocks) program).getBlocks()[1]).isDeclaration());
+        assertEquals("a", ((SyntaxTree.SetVariable) ((SyntaxTree.Blocks) program).getBlocks()[1])
+                .getVariableName());
+        assertEquals(new SyntaxTree.Number("20"),
+                ((SyntaxTree.SetVariable) ((SyntaxTree.Blocks) program).getBlocks()[1]).getValue());
+
+        assertTrue(((SyntaxTree.Blocks) program).getBlocks()[2] instanceof SyntaxTree.Print);
+        assertTrue(((SyntaxTree.Print) ((SyntaxTree.Blocks) program).getBlocks()[2]).getMessage()
+                instanceof SyntaxTree.Variable);
+        assertEquals("a", ((SyntaxTree.Variable) ((SyntaxTree.Print) ((SyntaxTree.Blocks) program)
+                .getBlocks()[2]).getMessage()).getVariableName());
+
+        assertTrue(((SyntaxTree.Blocks) program).getBlocks()[3] instanceof SyntaxTree.SetVariable);
+        assertTrue(((SyntaxTree.SetVariable) ((SyntaxTree.Blocks) program).getBlocks()[3]).isDeclaration());
+        assertEquals("b", ((SyntaxTree.SetVariable) ((SyntaxTree.Blocks) program).getBlocks()[3])
+                .getVariableName());
+    }
+
+    /**
+     * Test functions
+     */
+    @Test
+    public void testFunction() {
+        SyntaxTree.Block program = CompilerMain.compile(new Compiler("func printSum(a, b) {\n" +
+                "   print a + b\n" +
+                "}\n" +
+                "printSum(1, 2)"));
+        assertTrue(program instanceof SyntaxTree.Blocks);
+        assertEquals(2, ((SyntaxTree.Blocks) program).getBlocks().length);
+        assertTrue(((SyntaxTree.Blocks) program).getBlocks()[0] instanceof SyntaxTree.Function);
+        assertEquals("printSum",
+                ((SyntaxTree.Function) ((SyntaxTree.Blocks) program).getBlocks()[0]).getFunctionName());
+        assertArrayEquals(new String[] { "a", "b" },
+                ((SyntaxTree.Function) ((SyntaxTree.Blocks) program).getBlocks()[0]).getArgs());
+        assertTrue(((SyntaxTree.Function) ((SyntaxTree.Blocks) program).getBlocks()[0]).getCode()
+                .getBlocks()[0] instanceof SyntaxTree.Print);
+
+        assertTrue(((SyntaxTree.Blocks) program).getBlocks()[1] instanceof SyntaxTree.CallFunction);
+        assertEquals("printSum",
+                ((SyntaxTree.CallFunction) ((SyntaxTree.Blocks) program).getBlocks()[1]).getFunctionName());
+        assertArrayEquals(new SyntaxTree.Value[] { new SyntaxTree.Number("1"), new SyntaxTree.Number("2") },
+                ((SyntaxTree.CallFunction) ((SyntaxTree.Blocks) program).getBlocks()[1]).getArgs());
     }
 }
