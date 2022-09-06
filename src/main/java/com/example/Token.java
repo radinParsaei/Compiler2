@@ -42,6 +42,7 @@ public class Token {
 	}
  
 	public void setObject(SyntaxTree.Block object) {
+		if (object != null) object.setExtraData("lineNumber", line);
 		this.object = object;
 	}
 

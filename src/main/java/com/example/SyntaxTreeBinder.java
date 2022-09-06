@@ -249,4 +249,20 @@ public class SyntaxTreeBinder {
     public static SyntaxTree.Block valueAsProgram(Parser parser) {
         return parser.getTokens().get(0).getObject();
     }
+
+    public static SyntaxTree.Block returnStatement(Parser parser) {
+        SyntaxTree.Value returnValue = (SyntaxTree.Value) parser.getTokens().get(1).getObject();
+        if (returnValue == null) {
+            returnValue = nullInstance;
+        }
+        return new SyntaxTree.Return(returnValue);
+    }
+
+    public static SyntaxTree.Block continueStatement(Parser parser) {
+        return new SyntaxTree.Continue();
+    }
+
+    public static SyntaxTree.Block breakStatement(Parser parser) {
+        return new SyntaxTree.Break();
+    }
 }

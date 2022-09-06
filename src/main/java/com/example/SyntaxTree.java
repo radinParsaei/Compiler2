@@ -587,6 +587,7 @@ public class SyntaxTree {
         public If(Value condition, Block... code) {
             super(code);
             this.condition = condition;
+            setExtraData("condition", true);
         }
 
         public Value getCondition() {
@@ -635,6 +636,7 @@ public class SyntaxTree {
         public While(Value condition, Block... code) {
             super(code);
             this.condition = condition;
+            setExtraData("condition", true);
         }
 
         public Value getCondition() {
@@ -767,6 +769,45 @@ public class SyntaxTree {
         @Override
         public Value[] getValues() {
             return args;
+        }
+    }
+
+    public static class Return extends Block {
+        private Value value;
+
+        public Return(Value value) {
+            this.value = value;
+        }
+
+        public Value getValue() {
+            return value;
+        }
+
+        public void setValue(Value value) {
+            this.value = value;
+        }
+
+        @Override
+        public Object evaluate(Generator generator) {
+            return generator.generateReturn(this);
+        }
+
+        @Override
+        public Value[] getValues() {
+            return new Value[] { value };
+        }
+    }
+
+    public static class Continue extends Block {
+        @Override
+        public Object evaluate(Generator generator) {
+            return generator.generateContinue(this);
+        }
+    }
+    public static class Break extends Block {
+        @Override
+        public Object evaluate(Generator generator) {
+            return generator.generateBreak(this);
         }
     }
 }

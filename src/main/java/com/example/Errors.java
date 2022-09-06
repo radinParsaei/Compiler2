@@ -1,13 +1,15 @@
 package com.example;
 
 public class Errors {
-    public static void accessedUndefinedVariable(String variableName) {
-        Utils.printError("Tried to access undefined variable ", "\"", variableName, "\"");
+    public static void accessedUndefinedVariable(String variableName, SyntaxTree.Block block) {
+        Utils.printError("Tried to access undefined variable ", "\"", variableName, "\"",
+                block.getExtraData("lineNumber") != null? " in line " + block.getExtraData("lineNumber") : "");
         Utils.exit(1);
     }
 
-    public static void modifiedUndefinedVariable(String variableName) {
-        Utils.printError("Tried to modify the value of an undefined variable ", "\"", variableName, "\"");
+    public static void modifiedUndefinedVariable(String variableName, SyntaxTree.Block block) {
+        Utils.printError("Tried to modify the value of an undefined variable ", "\"", variableName, "\"",
+                block.getExtraData("lineNumber") != null? " in line " + block.getExtraData("lineNumber") : "");
         Utils.exit(1);
     }
 

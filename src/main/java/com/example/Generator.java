@@ -47,6 +47,10 @@ public abstract class Generator {
     public abstract Object generatePop(SyntaxTree.Value value);
     public abstract Object generateFunc(SyntaxTree.Function function);
     public abstract Object generateCall(SyntaxTree.CallFunction callFunction);
+    public abstract Object generateReturn(SyntaxTree.Return aReturn);
+    public abstract Object generateContinue(SyntaxTree.Continue aContinue);
+    public abstract Object generateBreak(SyntaxTree.Break aBreak);
+
 
     public void addTool(Tool... tool) {
         tools.addAll(Arrays.asList(tool));

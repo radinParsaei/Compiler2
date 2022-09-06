@@ -55,6 +55,12 @@ public class Compiler {
         lexer.add("VAR", "var ");
         // func (keyword)
         lexer.add("FUNC", "func ");
+        // return (keyword)
+        lexer.add("RETURN", "return");
+        // continue (keyword)
+        lexer.add("CONTINUE", "continue");
+        // return (keyword)
+        lexer.add("BREAK", "break");
         // comma
         lexer.add("COMMA", ",");
         // identifier (e.g. variable name)
@@ -84,7 +90,14 @@ public class Compiler {
         tokens.replace("expression OP3 expression", "expression", SyntaxTreeBinder::operationsWithPriority3);
         tokens.replace("call_function (expression (COMMA expression )*)?RIGHT_PARENTHESIS",
                 "expression", SyntaxTreeBinder::callFunction1);
+        tokens.replace("CONTINUE", "program", SyntaxTreeBinder::continueStatement);
+        tokens.replace("BREAK", "program", SyntaxTreeBinder::breakStatement);
         tokens.replace("PRINT expression", "program", SyntaxTreeBinder::print);
+        tokens.replace("RETURN( expression)?", "program", SyntaxTreeBinder::returnStatement, ((parser, index) -> {
+            if (index == 0) return true;
+            String tmp = parser.getTokens().get(index + 2).getName();
+            return !(tmp.startsWith("OP") || tmp.equals("EXPONENTIATION") || tmp.equals("COMP"));
+        }));
         tokens.replace("variable_set expression", "program", SyntaxTreeBinder::setVariable1);
         tokens.replace("IF expression LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::ifStatement);
         tokens.replace("program ELSEIF expression LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::elseIfStatement);
@@ -92,7 +105,11 @@ public class Compiler {
         tokens.replace("WHILE expression LEFT_BRACE (program )?RIGHT_BRACE", "program", SyntaxTreeBinder::whileStatement);
         tokens.replace("declare_function( program)? RIGHT_BRACE", "program", SyntaxTreeBinder::functionDeclaration1);
         tokens.replace("program( (NEWLINE|SEMICOLON) program)+", "program", SyntaxTreeBinder::programs, "NEWLINE");
-        tokens.replace("expression", "program", SyntaxTreeBinder::valueAsProgram);
+        tokens.replace("expression", "program", SyntaxTreeBinder::valueAsProgram, (parser, index) -> {
+            if (index == 0) return true;
+            String name = parser.getTokens().get(index - 1).getName();
+            return !name.equals(name.toUpperCase()); // IF, RETURN (any token that is not parsed yet and is from lexer)
+        });
     }
 
     public SyntaxTree.Block afterParse(Parser result) {

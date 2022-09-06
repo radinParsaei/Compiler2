@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Parser {
-    private static class RemovedObjectsPair {
+	private static class RemovedObjectsPair {
 		private Integer index;
 		private final Token token;
 
@@ -18,9 +18,13 @@ public class Parser {
 	private final ArrayList<RemovedObjectsPair> removedObjects = new ArrayList<>();
 
 	private Parser parent = null;
+	private CheckerLambda checker;
 
 	public interface CompilerLambda {
 		SyntaxTree.Block run(Parser tokens);
+	}
+	public interface CheckerLambda {
+		boolean matches(Parser thisParser, int matchedIndex);
 	}
 	private final ArrayList<Token> tokens;
 	private boolean saveTexts = false;
@@ -79,7 +83,11 @@ public class Parser {
 			if (map.charAt(i) == ' ') {
 				listIndex++;
 			}
+			for (String included1 : included) {
+				if (map.indexOf(included1, i) == i) listIndex--;
+			}
 		}
+		if (checker != null && !checker.matches(this, listIndex)) return;
 		StringBuilder text = null;
 		if (saveTexts) text = new StringBuilder();
 		int tmp = listIndex;
@@ -89,11 +97,12 @@ public class Parser {
 			if (included.contains(split[i])) {
 				int finalI = i;
 				int finalListIndex = listIndex;
-				Token token = removedObjects.stream().filter(
-								removedObjectsPair -> removedObjectsPair.index == finalListIndex + finalI)
-						.findFirst().get().token;
-				tmpTokens.add(token);
-				if (saveTexts) text.append(token.getText());
+				RemovedObjectsPair removedObjectsPair = removedObjects.stream().filter(
+								removedObjectsPair1 -> removedObjectsPair1.index == finalListIndex + finalI)
+						.findFirst().get();
+				removedObjects.remove(removedObjectsPair);
+				tmpTokens.add(removedObjectsPair.token);
+				if (saveTexts) text.append(removedObjectsPair.token.getText());
 				listIndex--;
 				continue;
 			}
@@ -117,6 +126,13 @@ public class Parser {
 		parser.parent = this;
 		t.setObject(lambda.run(parser));
 		this.replace(model, newName, lambda);
+	}
+
+	public void replace(String model, String newName, CompilerLambda lambda, CheckerLambda checker,
+						String... includedRemovedObjects) {
+		this.checker = checker;
+		replace(model, newName, lambda, includedRemovedObjects);
+		this.checker = null;
 	}
 
 	public Parser getParent() {

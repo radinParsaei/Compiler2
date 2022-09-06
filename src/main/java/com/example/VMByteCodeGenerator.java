@@ -1,9 +1,6 @@
 package com.example;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.example.Utils.copyArrays;
 
@@ -274,6 +271,15 @@ public class VMByteCodeGenerator extends Generator {
             res = new Object[condition.length + code.length + 4];
             copyArrays(res, 0, new Object[] { VMWrapper.SKIP, sizeof(code) } , code, condition,
                     new Object[] { VMWrapper.SKIPIF, -(sizeof(code) + sizeof(condition) + 2) });
+            for (int i = 0; i < res.length; i++) {
+                if (Objects.equals(res[i], VMWrapper.CONTINUE)) {
+                    res[i] = VMWrapper.SKIP;
+                    res[i + 1] = res.length - i - condition.length - 4;
+                } else if (Objects.equals(res[i], VMWrapper.BREAK)) {
+                    res[i] = VMWrapper.SKIP;
+                    res[i + 1] = res.length - i - 2;
+                }
+            }
         } else {
             res = new Object[condition.length + code.length + 5];
             copyArrays(res, 0, new Object[] { VMWrapper.REC }, code, new Object[] { VMWrapper.END },
@@ -324,5 +330,25 @@ public class VMByteCodeGenerator extends Generator {
         Object[] finalResult = new Object[res.size()];
         finalResult = res.toArray(finalResult);
         return finalResult;
+    }
+
+    @Override
+    public Object generateReturn(SyntaxTree.Return aReturn) {
+        Object[] value = (Object[]) aReturn.getValue().evaluate(this);
+        Object[] res = new Object[value.length + 1];
+        copyArrays(res, 0, value, new Byte[] { VMWrapper.RETURN });
+        return res;
+    }
+
+    @Override
+    public Object generateContinue(SyntaxTree.Continue aContinue) {
+        if (recording) return new Object[] { VMWrapper.CONTINUE, null }; // will be replaced with SKIP <N>
+        return new Object[] { VMWrapper.CONTINUE };
+    }
+
+    @Override
+    public Object generateBreak(SyntaxTree.Break aBreak) {
+        if (recording) return new Object[] { VMWrapper.BREAK, null }; // will be replaced with SKIP <N>
+        return new Object[] { VMWrapper.BREAK };
     }
 }

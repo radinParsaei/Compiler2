@@ -66,7 +66,7 @@ public class ScopeTool extends Tool {
             if (!((SyntaxTree.SetVariable) block).isDeclaration() && (!info.containsKey(pParent) ||
                     !info.get(pParent).containsKey(((SyntaxTree.SetVariable) block).getVariableName()))) {
                 if (globals.contains(((SyntaxTree.SetVariable) block).getVariableName())) return; // don't make any changes
-                Errors.modifiedUndefinedVariable(((SyntaxTree.SetVariable) block).getVariableName());
+                Errors.modifiedUndefinedVariable(((SyntaxTree.SetVariable) block).getVariableName(), block);
             }
             int id;
             if (((SyntaxTree.SetVariable) block).isDeclaration()) {
@@ -111,6 +111,13 @@ public class ScopeTool extends Tool {
                 pParent = parent;
                 parent = (SyntaxTree.Block) parent.getExtraData("parent");
             }
+            if (parent != null && parent.getExtraData("condition") != null &&
+                    (pParent instanceof SyntaxTree.Value || pParent == null)) {
+                do {
+                    pParent = parent;
+                    parent = (SyntaxTree.Block) parent.getExtraData("parent");
+                } while (parent != null && parent.getExtraData("locals") == null);
+            }
             boolean error = true;
             if (info.containsKey(pParent) && info.get(pParent).containsKey(((SyntaxTree.Variable) value).getVariableName())) {
                 value.setExtraData("id", info.get(pParent).get(((SyntaxTree.Variable) value).getVariableName()));
@@ -119,7 +126,7 @@ public class ScopeTool extends Tool {
                 error = false;
             }
             if (error) {
-                Errors.accessedUndefinedVariable(((SyntaxTree.Variable) value).getVariableName());
+                Errors.accessedUndefinedVariable(((SyntaxTree.Variable) value).getVariableName(), value);
             }
         }
     }
@@ -127,7 +134,7 @@ public class ScopeTool extends Tool {
     @Override
     public void finalizeBlock(SyntaxTree.Block block, SyntaxTree.Block parent) {
         if (info.containsKey(block)) {
-            // Mark the freed block's ID(s) as accessible 
+            // Mark the freed block's ID(s) as accessible
             ids.addAll(info.get(block).values());
             info.remove(block);
         }

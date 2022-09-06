@@ -184,4 +184,24 @@ public class ParserTest {
         assertArrayEquals(new SyntaxTree.Value[] { new SyntaxTree.Number("1"), new SyntaxTree.Number("2") },
                 ((SyntaxTree.CallFunction) ((SyntaxTree.Blocks) program).getBlocks()[1]).getArgs());
     }
+
+    /**
+     * Test recursive functions
+     */
+    @Test
+    public void testRecursiveFunction() {
+        SyntaxTree.Block program = CompilerMain.compile(new Compiler("func factorial(n) {\n" +
+                "  if n == 0 {\n" +
+                "    return 1\n" +
+                "  }\n" +
+                "  return factorial(n - 1) * n\n" +
+                "}\n" +
+                "\n" +
+                "factorial(5)"));
+        VMByteCodeGenerator vmByteCodeGenerator = new VMByteCodeGenerator(false);
+        VMWrapper vm = new VMWrapper();
+        Object[] bytes = (Object[]) vmByteCodeGenerator.generate(program);
+        vm.run(bytes);
+        assertEquals(120.0, vm.pop().getData());
+    }
 }
