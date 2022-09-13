@@ -257,7 +257,6 @@ public class AppTest
                 i += 1
             }
         */
-        // stack should be like [1, 2, 3, 4, 5, 6, 7, 8, 9]
         Object[] program = (Object[]) new VMByteCodeGenerator(false).generate(
                 new SyntaxTree.Blocks(
                         new SyntaxTree.SetVariable("i", new SyntaxTree.Number(0)).setDeclaration(true),
@@ -299,7 +298,6 @@ public class AppTest
 
             sub(2, 1)
         */
-        // stack should be like [1, 2, 3, 4, 5, 6, 7, 8, 9]
         Object[] program = (Object[]) new VMByteCodeGenerator().generate(new SyntaxTree.Blocks(
                 new SyntaxTree.Function("sub",
                         new SyntaxTree.SetVariable("res", new SyntaxTree.Sub(
@@ -313,6 +311,63 @@ public class AppTest
                 VMWrapper.REC, VMWrapper.GETPARAM, 1, VMWrapper.GETPARAM, 2, VMWrapper.SUB, VMWrapper.SETVAR, 0,
                 VMWrapper.GETVAR, 0, VMWrapper.CALLFUNC, null, VMWrapper.DELVAR, 0, VMWrapper.END, VMWrapper.PUT, 2,
                 VMWrapper.MKFUNC, "sub", VMWrapper.PUT, 2.0, VMWrapper.PUT, 1.0, VMWrapper.CALLFUNC, "sub", VMWrapper.POP
+        }, program);
+    }
+
+    /**
+     * test class
+     */
+    @Test
+    public void testClass() {
+        /*
+            class Test_ {
+                var a = 1
+                init {
+                    print "Hello"
+                }
+                func toString() {
+                    return "STR"
+                }
+                func test() {
+                    return this.a
+                }
+            }
+            class Test extends Test_ {
+            }
+            var i = new Test()
+            print i
+            i.a = new Test()
+            print i.a
+            print i.test()
+         */
+        Object[] program = (Object[]) new VMByteCodeGenerator().generate(new SyntaxTree.Blocks(
+                new SyntaxTree.Class("Test_",
+                        new SyntaxTree.SetVariable("a", new SyntaxTree.Number(1)).setDeclaration(true),
+                        new SyntaxTree.Function("<init>", new SyntaxTree.Print(new SyntaxTree.Text("Hello"))),
+                        new SyntaxTree.Function("toString", new SyntaxTree.Return(new SyntaxTree.Text("STR"))),
+                        new SyntaxTree.Function("test", new SyntaxTree.Return(
+                                new SyntaxTree.Variable("a").fromInstance(new SyntaxTree.This())))
+                ),
+                new SyntaxTree.Class("Test").setParent("Test_"),
+                new SyntaxTree.SetVariable("i", new SyntaxTree.New("Test")).setDeclaration(true),
+                new SyntaxTree.Print(new SyntaxTree.Variable("i")),
+                new SyntaxTree.SetVariable("a", new SyntaxTree.New("Test")).fromInstance(new SyntaxTree.Variable("i")),
+                new SyntaxTree.Print(new SyntaxTree.Variable("a").fromInstance(new SyntaxTree.Variable("i"))),
+                new SyntaxTree.Print(new SyntaxTree.CallFunction("test").fromInstance(new SyntaxTree.Variable("i")))
+        ));
+        assertArrayEquals(new Object[] {
+                VMWrapper.PUT, "a", VMWrapper.PUT, 1.0, VMWrapper.REC, VMWrapper.PUT, "Hello", VMWrapper.CALLFUNC, null,
+                VMWrapper.END, VMWrapper.PUT, 0, VMWrapper.MKFUNC, "Test_#<init>", VMWrapper.PUT, "<init>", VMWrapper.GETPTRTOLASTFUNC,
+                VMWrapper.REC, VMWrapper.PUT, "STR", VMWrapper.RETURN, VMWrapper.END, VMWrapper.PUT, 0, VMWrapper.MKFUNC,
+                "Test_#toString", VMWrapper.PUT, "#toString", VMWrapper.GETPTRTOLASTFUNC, VMWrapper.REC, VMWrapper.THIS,
+                VMWrapper.PUT, "a", VMWrapper.GET, VMWrapper.RETURN, VMWrapper.END, VMWrapper.PUT, 0, VMWrapper.MKFUNC,
+                "Test_#test", VMWrapper.PUT, "#test", VMWrapper.GETPTRTOLASTFUNC, VMWrapper.CREATE_MAP, 4,
+                VMWrapper.CREATE_CLASS, "Test_", VMWrapper.PUT, false, VMWrapper.PUT, "Test_", VMWrapper.CREATE_MAP, 1,
+                VMWrapper.CREATE_CLASS, "Test", VMWrapper.CREATE_INSTANCE, "Test", VMWrapper.SETVAR, "i",
+                VMWrapper.GETVAR, "i", VMWrapper.CALLFUNC, null, VMWrapper.GETVAR, "i", VMWrapper.PUT, "a",
+                VMWrapper.CREATE_INSTANCE, "Test", VMWrapper.SET, VMWrapper.POP, VMWrapper.GETVAR, "i",
+                VMWrapper.PUT, "a", VMWrapper.GET, VMWrapper.CALLFUNC, null, VMWrapper.GETVAR, "i",
+                VMWrapper.CALLMETHOD, "#test", VMWrapper.CALLFUNC, null
         }, program);
     }
 }

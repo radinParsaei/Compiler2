@@ -59,6 +59,8 @@ public class ScopeTool extends Tool {
             parent = (SyntaxTree.Block) parent.getExtraData("parent");
         }
         if (block instanceof SyntaxTree.SetVariable) {
+            // TODO: check type of the instance and check if the property exists
+            if (((SyntaxTree.SetVariable) block).getInstance() != null) return;
             if (parent == null && ((SyntaxTree.SetVariable) block).isDeclaration()) {
                 globals.add(((SyntaxTree.SetVariable) block).getVariableName());
                 return;
@@ -106,6 +108,8 @@ public class ScopeTool extends Tool {
     @Override
     public void processValue(SyntaxTree.Value value, SyntaxTree.Block parent) {
         if (value instanceof SyntaxTree.Variable) {
+            // TODO: check type of the instance and check if the property exists
+            if (((SyntaxTree.Variable) value).getInstance() != null) return;
             SyntaxTree.Block pParent = null;
             while (parent != null && parent.getExtraData("locals") == null) {
                 pParent = parent;

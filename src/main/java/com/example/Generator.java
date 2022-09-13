@@ -50,6 +50,10 @@ public abstract class Generator {
     public abstract Object generateReturn(SyntaxTree.Return aReturn);
     public abstract Object generateContinue(SyntaxTree.Continue aContinue);
     public abstract Object generateBreak(SyntaxTree.Break aBreak);
+    public abstract Object generateClass(SyntaxTree.Class aClass);
+    public abstract Object generateNew(SyntaxTree.New aNew);
+    public abstract Object generateThis(SyntaxTree.This aThis);
+    public abstract Object generateSuper(SyntaxTree.Super aSuper);
 
 
     public void addTool(Tool... tool) {

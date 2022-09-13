@@ -91,6 +91,12 @@ public class VMByteCodeGenerator extends Generator {
 
     @Override
     public Object generateVariable(SyntaxTree.Variable variable) {
+        if (variable.getInstance() != null) {
+            Object[] instance = (Object[]) variable.getInstance().evaluate(this);
+            Object[] res = new Object[instance.length + 3];
+            copyArrays(res, 0, instance, new Object[] { VMWrapper.PUT, variable.getVariableName(), VMWrapper.GET });
+            return res;
+        }
         Object variableName = variable.getExtraData("id");
         if (variableName == null) {
             variableName = variable.getVariableName();
@@ -104,6 +110,14 @@ public class VMByteCodeGenerator extends Generator {
 
     @Override
     public Object generateSetVariable(SyntaxTree.SetVariable setVariable) {
+        if (setVariable.getInstance() != null) {
+            Object[] instance = (Object[]) setVariable.getInstance().evaluate(this);
+            Object[] value = (Object[]) setVariable.getValue().evaluate(this);
+            Object[] res = new Object[instance.length + value.length + 4];
+            copyArrays(res, 0, instance, new Object[] { VMWrapper.PUT, setVariable.getVariableName() },
+                    value, new Object[] { VMWrapper.SET, VMWrapper.POP });
+            return res;
+        }
         Object variableName = setVariable.getExtraData("id");
         if (variableName == null) variableName = setVariable.getVariableName();
         Object[] data = (Object[]) setVariable.getValue().evaluate(this);
@@ -324,8 +338,14 @@ public class VMByteCodeGenerator extends Generator {
         for (SyntaxTree.Value value : values) {
             res.addAll(Arrays.asList((Object[]) value.evaluate(this)));
         }
-        res.add(VMWrapper.CALLFUNC);
-        res.add(callFunction.getFunctionName());
+        if (callFunction.getInstance() != null) {
+            res.addAll(Arrays.asList((Object[]) callFunction.getInstance().evaluate(this)));
+            res.add(VMWrapper.CALLMETHOD);
+            res.add("#" + callFunction.getFunctionName());
+        } else {
+            res.add(VMWrapper.CALLFUNC);
+            res.add(callFunction.getFunctionName());
+        }
 
         Object[] finalResult = new Object[res.size()];
         finalResult = res.toArray(finalResult);
@@ -350,5 +370,72 @@ public class VMByteCodeGenerator extends Generator {
     public Object generateBreak(SyntaxTree.Break aBreak) {
         if (recording) return new Object[] { VMWrapper.BREAK, null }; // will be replaced with SKIP <N>
         return new Object[] { VMWrapper.BREAK };
+    }
+
+    @Override
+    public Object generateClass(SyntaxTree.Class aClass) {
+        ArrayList<Object> res = new ArrayList<>();
+        int items = 0;
+        for (SyntaxTree.Block block : aClass.getContent().getBlocks()) {
+            if (block instanceof SyntaxTree.SetVariable && ((SyntaxTree.SetVariable) block).isDeclaration()) {
+                items++;
+                res.add(VMWrapper.PUT);
+                res.add(((SyntaxTree.SetVariable) block).getVariableName());
+                res.addAll(Arrays.asList((Object[]) ((SyntaxTree.SetVariable) block).getValue().evaluate(this)));
+            } else if (block instanceof SyntaxTree.Function) {
+                items++;
+                String tmp = ("#" + ((SyntaxTree.Function) block).getFunctionName())
+                        .replace("#<init>", "<init>");
+                ((SyntaxTree.Function) block).setFunctionName(aClass.getName() + "#" +
+                        ((SyntaxTree.Function) block).getFunctionName());
+                res.addAll(Arrays.asList((Object[]) block.evaluate(this)));
+                res.add(VMWrapper.PUT);
+                res.add(tmp);
+                res.add(VMWrapper.GETPTRTOLASTFUNC);
+            }
+        }
+        if (aClass.getParent() != null) {
+            items++;
+            res.add(VMWrapper.PUT);
+            res.add(false);
+            res.add(VMWrapper.PUT);
+            res.add(aClass.getParent());
+        }
+
+        res.add(VMWrapper.CREATE_MAP);
+        res.add(items);
+        res.add(VMWrapper.CREATE_CLASS);
+        res.add(aClass.getName());
+        Object[] finalResult = new Object[res.size()];
+        finalResult = res.toArray(finalResult);
+        return finalResult;
+    }
+
+    @Override
+    public Object generateNew(SyntaxTree.New aNew) {
+        ArrayList<Object> res = new ArrayList<>();
+        SyntaxTree.Value[] values = aNew.getArgs();
+        if (values != null) {
+            for (SyntaxTree.Value value : values) {
+                res.addAll(Arrays.asList((Object[]) value.evaluate(this)));
+            }
+        }
+
+        res.add(VMWrapper.CREATE_INSTANCE);
+        res.add(aNew.getClassName());
+
+        Object[] finalResult = new Object[res.size()];
+        finalResult = res.toArray(finalResult);
+        return finalResult;
+    }
+
+    @Override
+    public Object generateThis(SyntaxTree.This aThis) {
+        return new Object[] { VMWrapper.THIS };
+    }
+
+    @Override
+    public Object generateSuper(SyntaxTree.Super aSuper) {
+        return new Object[] { VMWrapper.THIS, VMWrapper.PUT, true, VMWrapper.GET };
     }
 }

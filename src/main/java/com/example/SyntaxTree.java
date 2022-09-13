@@ -216,8 +216,9 @@ public class SyntaxTree {
             return instance;
         }
 
-        public void setInstance(Value instance) {
+        public Variable fromInstance(Value instance) {
             this.instance = instance;
+            return this;
         }
 
         public Variable(String variableName) {
@@ -251,8 +252,9 @@ public class SyntaxTree {
             return instance;
         }
 
-        public void setInstance(Value instance) {
+        public SetVariable fromInstance(Value instance) {
             this.instance = instance;
+            return this;
         }
 
         public Value getValue() {
@@ -708,7 +710,7 @@ public class SyntaxTree {
     }
 
     public static class Function extends ControlFLowBlock {
-        private final String functionName;
+        private String functionName;
 
         public Function(String functionName, Block... code) {
             super(code);
@@ -729,6 +731,10 @@ public class SyntaxTree {
             return functionName;
         }
 
+        public void setFunctionName(String functionName) {
+            this.functionName = functionName;
+        }
+
         @Override
         public Object evaluate(Generator generator) {
             return generator.generateFunc(this);
@@ -743,10 +749,20 @@ public class SyntaxTree {
     public static class CallFunction extends Value {
         private final String functionName;
         private Value[] args;
+        private Value instance;
 
         public CallFunction(String functionName, Value... args) {
             this.functionName = functionName;
             this.args = args;
+        }
+
+        public Value getInstance() {
+            return instance;
+        }
+
+        public CallFunction fromInstance(Value instance) {
+            this.instance = instance;
+            return this;
         }
 
         public String getFunctionName() {
@@ -757,8 +773,9 @@ public class SyntaxTree {
             return args;
         }
 
-        public void setArgs(Value... args) {
+        public CallFunction setArgs(Value... args) {
             this.args = args;
+            return this;
         }
 
         @Override
@@ -808,6 +825,97 @@ public class SyntaxTree {
         @Override
         public Object evaluate(Generator generator) {
             return generator.generateBreak(this);
+        }
+    }
+
+    public static class Class extends Block {
+        private String name;
+        private Blocks content;
+        private String parents;
+
+        public Class(String name, Block... content) {
+            this.name = name;
+            this.content = new Blocks(content);
+        }
+
+        public Class(String name, String parents, Block... content) {
+            this.name = name;
+            this.content = new Blocks(content);
+            this.parents = parents;
+        }
+
+        public String getParent() {
+            return parents;
+        }
+
+        public Class setParent(String parents) {
+            this.parents = parents;
+            return this;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public Blocks getContent() {
+            return content;
+        }
+
+        public void setContent(Blocks content) {
+            this.content = content;
+        }
+
+        @Override
+        public Object evaluate(Generator generator) {
+            return generator.generateClass(this);
+        }
+    }
+
+    public static class New extends Value {
+        private String className;
+        private Value[] args;
+
+        public New(String className) {
+            this.className = className;
+        }
+
+        public Value[] getArgs() {
+            return args;
+        }
+
+        public New setArgs(Value... args) {
+            this.args = args;
+            return this;
+        }
+
+        public String getClassName() {
+            return className;
+        }
+
+        public void setClassName(String className) {
+            this.className = className;
+        }
+
+        @Override
+        public Object evaluateValue(Generator generator) {
+            return generator.generateNew(this);
+        }
+    }
+
+    public static class This extends Value {
+        @Override
+        public Object evaluateValue(Generator generator) {
+            return generator.generateThis(this);
+        }
+    }
+    public static class Super extends Value {
+        @Override
+        public Object evaluateValue(Generator generator) {
+            return generator.generateSuper(this);
         }
     }
 }
