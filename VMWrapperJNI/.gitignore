@@ -5,3 +5,4 @@
 *.so
 static_call.cpp
 static_call_list.yml
+*.a

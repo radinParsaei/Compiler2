@@ -73,7 +73,7 @@ public class VMWrapper {
     private final int vm;
 
     static {
-        System.loadLibrary("vmwrapper");
+        if (!Utils.IS_AOT) System.loadLibrary("vmwrapper");
     }
 
     public VMWrapper() {

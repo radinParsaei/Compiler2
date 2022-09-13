@@ -19,7 +19,7 @@ JNIEXPORT void JNICALL PREFIX(run) (JNIEnv *env, jclass, jint vm, jint opcode, j
         vms[vm].run1(opcode, Types::True);
         break;
     case (int) Types::BigNumber:
-        vms[vm].run1(opcode, NUMBER(env->GetStringUTFChars(data, new jboolean(1))));
+        vms[vm].run1(opcode, NUMBER_FROM_STRING(env->GetStringUTFChars(data, new jboolean(1))));
         break;
     case (int) Types::Text:
         vms[vm].run1(opcode, env->GetStringUTFChars(data, new jboolean(1)));
@@ -52,7 +52,7 @@ JNIEXPORT jstring JNICALL PREFIX(disassemble) (JNIEnv *env, jclass, jint opcode,
         return env->NewStringUTF(disassemble(opcode, Types::True).toString().c_str());
         break;
     case (int) Types::BigNumber:
-        return env->NewStringUTF(disassemble(opcode, NUMBER(env->GetStringUTFChars(data, new jboolean(1)))).toString().c_str());
+        return env->NewStringUTF(disassemble(opcode, NUMBER_FROM_STRING(env->GetStringUTFChars(data, new jboolean(1)))).toString().c_str());
         break;
     case (int) Types::Text:
         return env->NewStringUTF(disassemble(opcode, env->GetStringUTFChars(data, new jboolean(1))).toString().c_str());

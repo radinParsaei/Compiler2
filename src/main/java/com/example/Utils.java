@@ -1,6 +1,17 @@
 package com.example;
 
+import org.graalvm.nativeimage.ImageInfo;
+
 public class Utils {
+
+    public static boolean IS_AOT = false;
+
+    static {
+        try {
+            IS_AOT = ImageInfo.inImageCode();
+        } catch (NoClassDefFoundError ignore) {}
+    }
+
     public static void copyArrays(Object[] destination, int loc, Object[]... toCopy) {
         for (Object[] objects : toCopy) {
             System.arraycopy(objects, 0, destination, loc, objects.length);
