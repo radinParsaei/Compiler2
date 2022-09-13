@@ -236,9 +236,9 @@ public class AppTest
                 )
         );
         assertArrayEquals(new Object[] {
-                VMWrapper.PUT, 0.0, VMWrapper.SETVAR, "i", VMWrapper.REC, VMWrapper.GETVAR, "i", VMWrapper.GETVAR, "i",
-                VMWrapper.PUT, 1.0, VMWrapper.ADD, VMWrapper.SETVAR, "i", VMWrapper.END, VMWrapper.REC,
-                VMWrapper.GETVAR, "i", VMWrapper.PUT, 10.0, VMWrapper.LT, VMWrapper.END, VMWrapper.WHILE
+                VMWrapper.PUT, 0.0, VMWrapper.SETVAR, "i", VMWrapper.REC, VMWrapper.GETVAR, "i", VMWrapper.PUT, 1.0,
+                VMWrapper.INCREASE, "i", VMWrapper.END, VMWrapper.REC, VMWrapper.GETVAR, "i", VMWrapper.PUT, 10.0,
+                VMWrapper.LT, VMWrapper.END, VMWrapper.WHILE
         }, program);
     }
 
@@ -276,12 +276,11 @@ public class AppTest
                 )
         );
         assertArrayEquals(new Object[] {
-                VMWrapper.PUT, 0.0, VMWrapper.SETVAR, "i", VMWrapper.REC, VMWrapper.SKIP, 7, VMWrapper.GETVAR, "i",
-                VMWrapper.PUT, 1.0, VMWrapper.ADD, VMWrapper.SETVAR, "i", VMWrapper.GETVAR, "i", VMWrapper.PUT, 2.0,
-                VMWrapper.MOD, VMWrapper.PUT, 0.0, VMWrapper.NEQ, VMWrapper.SKIPIF, -17, VMWrapper.GETVAR, "i",
-                VMWrapper.CALLFUNC, null, VMWrapper.GETVAR, "i", VMWrapper.PUT, 1.0, VMWrapper.ADD,
-                VMWrapper.SETVAR, "i", VMWrapper.END, VMWrapper.REC, VMWrapper.GETVAR, "i", VMWrapper.PUT, 10.0,
-                VMWrapper.LT, VMWrapper.END, VMWrapper.WHILE
+                VMWrapper.PUT, 0.0, VMWrapper.SETVAR, "i", VMWrapper.REC, VMWrapper.SKIP, 4, VMWrapper.PUT, 1.0,
+                VMWrapper.INCREASE, "i", VMWrapper.GETVAR, "i", VMWrapper.PUT, 2.0, VMWrapper.MOD, VMWrapper.PUT, 0.0,
+                VMWrapper.NEQ, VMWrapper.SKIPIF, -14, VMWrapper.GETVAR, "i", VMWrapper.CALLFUNC, null,
+                VMWrapper.PUT, 1.0, VMWrapper.INCREASE, "i", VMWrapper.END, VMWrapper.REC, VMWrapper.GETVAR, "i",
+                VMWrapper.PUT, 10.0, VMWrapper.LT, VMWrapper.END, VMWrapper.WHILE
         }, program);
     }
 

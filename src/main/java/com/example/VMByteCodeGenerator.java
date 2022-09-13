@@ -7,15 +7,18 @@ import static com.example.Utils.copyArrays;
 public class VMByteCodeGenerator extends Generator {
     private boolean recording = false;
     private boolean generatePops = true;
+    private static final Object[] empty = new Object[0];
 
     public VMByteCodeGenerator(Tool... tools) {
         super(new ScopeTool());
         addTool(tools);
+        addTool(new OptimizerTool());
     }
 
     public VMByteCodeGenerator(boolean generatePops, Tool... tools) {
         super(new ScopeTool());
         addTool(tools);
+        addTool(new OptimizerTool());
         this.generatePops = generatePops;
     }
 
@@ -28,9 +31,14 @@ public class VMByteCodeGenerator extends Generator {
         return size;
     }
 
-    private Object[] generateOperator(SyntaxTree.Operator operator, byte opCode) {
-        Object[] value1 = (Object[]) operator.getValue1().evaluate(this);
+    private Object[] generateOperator(SyntaxTree.Operator operator, byte opCode, Byte inplaceOpCode) {
         Object[] value2 = (Object[]) operator.getValue2().evaluate(this);
+        if (inplaceOpCode != null && operator.getExtraData("inplace") != null) {
+            Object[] res = new Object[value2.length + 2];
+            copyArrays(res, 0, value2, new Object[] { inplaceOpCode, operator.getExtraData("inplace") });
+            return res;
+        }
+        Object[] value1 = (Object[]) operator.getValue1().evaluate(this);
         Object[] res = new Object[value1.length + value2.length + 1];
         System.arraycopy(value1, 0, res, 0, value1.length);
         System.arraycopy(value2, 0, res, value1.length, value2.length);
@@ -121,126 +129,129 @@ public class VMByteCodeGenerator extends Generator {
         Object variableName = setVariable.getExtraData("id");
         if (variableName == null) variableName = setVariable.getVariableName();
         Object[] data = (Object[]) setVariable.getValue().evaluate(this);
-        Object[] res = new Object[data.length + 2];
+        boolean inplace = setVariable.getValue().getExtraData("inplace") != null;
+        Object[] res = new Object[data.length + (inplace? 0:2)];
         System.arraycopy(data, 0, res, 0, data.length);
-        res[data.length] = VMWrapper.SETVAR;
-        res[data.length + 1] = variableName;
+        if (!inplace) {
+            res[data.length] = VMWrapper.SETVAR;
+            res[data.length + 1] = variableName;
+        }
         return res;
     }
 
     @Override
     public Object generateAdd(SyntaxTree.Add add) {
-        return generateOperator(add, VMWrapper.ADD);
+        return generateOperator(add, VMWrapper.ADD, VMWrapper.INCREASE);
     }
 
     @Override
     public Object generateSub(SyntaxTree.Sub sub) {
-        return generateOperator(sub, VMWrapper.SUB);
+        return generateOperator(sub, VMWrapper.SUB, VMWrapper.DECREASE);
     }
 
     @Override
     public Object generateMul(SyntaxTree.Mul mul) {
-        return generateOperator(mul, VMWrapper.MUL);
+        return generateOperator(mul, VMWrapper.MUL, VMWrapper.INPLACE_MUL);
     }
 
     @Override
     public Object generateDiv(SyntaxTree.Div div) {
-        return generateOperator(div, VMWrapper.DIV);
+        return generateOperator(div, VMWrapper.DIV, VMWrapper.INPLACE_DIV);
     }
 
     @Override
     public Object generateMod(SyntaxTree.Mod mod) {
-        return generateOperator(mod, VMWrapper.MOD);
+        return generateOperator(mod, VMWrapper.MOD, VMWrapper.INPLACE_MOD);
     }
 
     @Override
     public Object generatePow(SyntaxTree.Pow pow) {
-        return generateOperator(pow, VMWrapper.POW);
+        return generateOperator(pow, VMWrapper.POW, VMWrapper.POW);
     }
 
     @Override
     public Object generateEquals(SyntaxTree.Equals equals) {
-        return generateOperator(equals, VMWrapper.EQ);
+        return generateOperator(equals, VMWrapper.EQ, null);
     }
 
     @Override
     public Object generateNotEquals(SyntaxTree.NotEquals notEquals) {
-        return generateOperator(notEquals, VMWrapper.NEQ);
+        return generateOperator(notEquals, VMWrapper.NEQ, null);
     }
 
     @Override
     public Object generateLooksEquals(SyntaxTree.LooksEquals looksEquals) {
-        return generateOperator(looksEquals, VMWrapper.LEQ);
+        return generateOperator(looksEquals, VMWrapper.LEQ, null);
     }
 
     @Override
     public Object generateGreaterThan(SyntaxTree.GreaterThan greaterThan) {
-        return generateOperator(greaterThan, VMWrapper.GT);
+        return generateOperator(greaterThan, VMWrapper.GT, null);
     }
 
     @Override
     public Object generateLesserThan(SyntaxTree.LesserThan lesserThan) {
-        return generateOperator(lesserThan, VMWrapper.LT);
+        return generateOperator(lesserThan, VMWrapper.LT, null);
     }
 
     @Override
     public Object generateGreaterThanOrEqual(SyntaxTree.GreaterThanOrEqual greaterThanOrEqual) {
-        return generateOperator(greaterThanOrEqual, VMWrapper.GE);
+        return generateOperator(greaterThanOrEqual, VMWrapper.GE, null);
     }
 
     @Override
     public Object generateLesserThanOrEqual(SyntaxTree.LesserThanOrEqual lesserThanOrEqual) {
-        return generateOperator(lesserThanOrEqual, VMWrapper.LE);
+        return generateOperator(lesserThanOrEqual, VMWrapper.LE, null);
     }
 
     @Override
     public Object generateAnd(SyntaxTree.And and) {
-        return generateOperator(and, VMWrapper.AND);
+        return generateOperator(and, VMWrapper.AND, null);
     }
 
     @Override
     public Object generateOr(SyntaxTree.Or or) {
-        return generateOperator(or, VMWrapper.OR);
+        return generateOperator(or, VMWrapper.OR, null);
     }
 
     @Override
     public Object generateBitwiseAnd(SyntaxTree.BitwiseAnd bitwiseAnd) {
-        return generateOperator(bitwiseAnd, VMWrapper.B_AND);
+        return generateOperator(bitwiseAnd, VMWrapper.B_AND, VMWrapper.INPLACE_AND);
     }
 
     @Override
     public Object generateBitwiseOr(SyntaxTree.BitwiseOr bitwiseOr) {
-        return generateOperator(bitwiseOr, VMWrapper.B_OR);
+        return generateOperator(bitwiseOr, VMWrapper.B_OR, VMWrapper.INPLACE_OR);
     }
 
     @Override
     public Object generateLeftShift(SyntaxTree.LeftShift leftShift) {
-        return generateOperator(leftShift, VMWrapper.LSHIFT);
+        return generateOperator(leftShift, VMWrapper.LSHIFT, VMWrapper.INPLACE_LSHIFT);
     }
 
     @Override
     public Object generateRightShift(SyntaxTree.RightShift rightShift) {
-        return generateOperator(rightShift, VMWrapper.RSHIFT);
+        return generateOperator(rightShift, VMWrapper.RSHIFT, VMWrapper.INPLACE_RSHIFT);
     }
 
     @Override
     public Object generateXor(SyntaxTree.Xor xor) {
-        return generateOperator(xor, VMWrapper.XOR);
+        return generateOperator(xor, VMWrapper.XOR, VMWrapper.INPLACE_XOR);
     }
 
     @Override
     public Object generateNegative(SyntaxTree.Negative negative) {
-        return generateOperator(negative, VMWrapper.NEGATE);
+        return generateOperator(negative, VMWrapper.NEGATE, null);
     }
 
     @Override
     public Object generateNot(SyntaxTree.Not not) {
-        return generateOperator(not, VMWrapper.NOT);
+        return generateOperator(not, VMWrapper.NOT, null);
     }
 
     @Override
     public Object generateBitwiseNot(SyntaxTree.BitwiseNot bitwiseNot) {
-        return generateOperator(bitwiseNot, VMWrapper.B_NOT);
+        return generateOperator(bitwiseNot, VMWrapper.B_NOT, null);
     }
 
     @Override

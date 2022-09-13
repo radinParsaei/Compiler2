@@ -1,5 +1,6 @@
 package com.example;
 
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -190,6 +191,7 @@ public class ParserTest {
      */
     @Test
     public void testRecursiveFunction() {
+
         SyntaxTree.Block program = CompilerMain.compile(new Compiler("func factorial(n) {\n" +
                 "  if n == 0 {\n" +
                 "    return 1\n" +
@@ -199,9 +201,14 @@ public class ParserTest {
                 "\n" +
                 "factorial(5)"));
         VMByteCodeGenerator vmByteCodeGenerator = new VMByteCodeGenerator(false);
-        VMWrapper vm = new VMWrapper();
-        Object[] bytes = (Object[]) vmByteCodeGenerator.generate(program);
-        vm.run(bytes);
-        assertEquals(120.0, vm.pop().getData());
+        try {
+            VMWrapper vm = new VMWrapper();
+            Object[] bytes = (Object[]) vmByteCodeGenerator.generate(program);
+            vm.run(bytes);
+            assertEquals(120.0, vm.pop().getData());
+        } catch (UnsatisfiedLinkError e) {
+            // if VMWrapper was not accessible in testing environment most of the tests will be ignored
+            Assume.assumeNoException(e.getMessage(), e);
+        }
     }
 }

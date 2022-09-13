@@ -61,42 +61,39 @@ public abstract class Generator {
     }
 
     public Generator(Tool... tools) {
-        for (Tool tool : tools)
-            addTool(tool);
+        addTool(tools);
     }
 
     private void runTools(SyntaxTree.Block block) {
-        for (Tool tool : tools) {
-            if (block.getExtraData("parent") == null && block instanceof SyntaxTree.Value) {
-                block.setExtraData("unneededResult", true); // result of this block is unneeded and should be popped out from the stack
-                tool.processValue((SyntaxTree.Value) block, null);
-            }
-            if (block.getCodeBlocks() != null) {
-                for (SyntaxTree.Block block1 : block.getCodeBlocks()) {
-                    block1.setExtraData("parent", block);
-                    if (block1 instanceof SyntaxTree.Value) { // in case there was a value inside the list of blocks (such as function calls)
-                        block1.setExtraData("unneededResult", true); // result of this block is unneeded and should be popped out from the stack
-                        tool.processValue((SyntaxTree.Value) block1, block);
-                        runTools(block1);
-                        tool.finalizeValue((SyntaxTree.Value) block1, block);
-                    } else {
-                        tool.processBlock(block1, block);
-                        runTools(block1);
-                        tool.finalizeBlock(block1, block);
-                    }
+        if (block.getExtraData("parent") == null && block instanceof SyntaxTree.Value) {
+            block.setExtraData("unneededResult", true); // result of this block is unneeded and should be popped out from the stack
+            for (Tool tool : tools) tool.processValue((SyntaxTree.Value) block, null);
+        }
+        if (block.getCodeBlocks() != null) {
+            for (SyntaxTree.Block block1 : block.getCodeBlocks()) {
+                block1.setExtraData("parent", block);
+                if (block1 instanceof SyntaxTree.Value) { // in case there was a value inside the list of blocks (such as function calls)
+                    block1.setExtraData("unneededResult", true); // result of this block is unneeded and should be popped out from the stack
+                    for (Tool tool : tools) tool.processValue((SyntaxTree.Value) block1, block);
+                    runTools(block1);
+                    for (Tool tool : tools) tool.finalizeValue((SyntaxTree.Value) block1, block);
+                } else {
+                    for (Tool tool : tools) tool.processBlock(block1, block);
+                    runTools(block1);
+                    for (Tool tool : tools) tool.finalizeBlock(block1, block);
                 }
             }
-            if (block.getValues() != null) {
-                for (SyntaxTree.Value value : block.getValues()) {
-                    value.setExtraData("parent", block);
-                    tool.processValue(value, block);
-                    runTools(value);
-                    tool.finalizeValue(value, block);
-                }
+        }
+        if (block.getValues() != null) {
+            for (SyntaxTree.Value value : block.getValues()) {
+                value.setExtraData("parent", block);
+                for (Tool tool : tools) tool.processValue(value, block);
+                runTools(value);
+                for (Tool tool : tools) tool.finalizeValue(value, block);
             }
-            if (block.getExtraData("parent") == null && block instanceof SyntaxTree.Value) {
-                tool.finalizeValue((SyntaxTree.Value) block, null);
-            }
+        }
+        if (block.getExtraData("parent") == null && block instanceof SyntaxTree.Value) {
+            for (Tool tool : tools) tool.finalizeValue((SyntaxTree.Value) block, null);
         }
     }
 
