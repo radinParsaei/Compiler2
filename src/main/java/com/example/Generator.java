@@ -7,7 +7,8 @@ import java.util.Arrays;
  * Each backend needs to extend this class and override its methods to generate output(e.g. JVM class, source code, llvm IR...)
  */
 public abstract class Generator {
-    private final ArrayList<Tool> tools = new ArrayList<>();
+    private static final Object[] empty = new Object[0];
+    protected final ArrayList<Tool> tools = new ArrayList<>();
 
     public abstract Object generateNumber(SyntaxTree.Number n);
     public abstract Object generateText(SyntaxTree.Text n);
@@ -98,7 +99,14 @@ public abstract class Generator {
     }
 
     public Object generate(SyntaxTree.Block block) {
+        Errors.clear();
+        for (Tool tool : tools) tool.processBlock(block, null);
         runTools(block);
+        for (Tool tool : tools) tool.finalizeBlock(block, null);
+        if (Errors.wasThereAnError()) {
+            Errors.clear();
+            return empty;
+        }
         return block.evaluate(this);
     }
 }

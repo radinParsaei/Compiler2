@@ -10,6 +10,11 @@ public class Lexer {
     private final LinkedHashMap<String, String> lexerConf = new LinkedHashMap<>();
     private final LinkedHashMap<String, CustomToken> lexerConfWithStringChecker = new LinkedHashMap<>();
     private int line = 1;
+    private boolean ignoreErrors = false;
+
+    public void ignoreErrors(boolean ignoreErrors) {
+        this.ignoreErrors = ignoreErrors;
+    }
 
     private String addStrings(String... strings) {
         StringBuilder builder = new StringBuilder();
@@ -66,8 +71,13 @@ public class Lexer {
             previousInput = input;
             input = input.substring(token.getText().length());
             if (previousInput.equals(input)) {
-                Errors.syntaxError(line.length() - input.length(), line);
-                return new ArrayList<>();
+                if (!ignoreErrors) {
+                    Errors.syntaxError(line.length() - input.length(), line);
+                    return new ArrayList<>();
+                } else {
+                    tokens.add(new Token("NONE", input));
+                    return tokens;
+                }
             }
         }
         return tokens;

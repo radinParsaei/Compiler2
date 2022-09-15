@@ -69,6 +69,7 @@ public class ScopeTool extends Tool {
                     !info.get(pParent).containsKey(((SyntaxTree.SetVariable) block).getVariableName()))) {
                 if (globals.contains(((SyntaxTree.SetVariable) block).getVariableName())) return; // don't make any changes
                 Errors.modifiedUndefinedVariable(((SyntaxTree.SetVariable) block).getVariableName(), block);
+                return;
             }
             int id;
             if (((SyntaxTree.SetVariable) block).isDeclaration()) {
@@ -146,4 +147,8 @@ public class ScopeTool extends Tool {
 
     @Override
     public void finalizeValue(SyntaxTree.Value value, SyntaxTree.Block block) {}
+
+    public HashSet<String> getGlobals() {
+        return globals;
+    }
 }

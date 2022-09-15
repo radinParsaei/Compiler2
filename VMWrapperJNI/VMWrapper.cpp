@@ -133,3 +133,7 @@ JNIEXPORT jdouble JNICALL PREFIX(stackTopSliceDouble) (JNIEnv *env, jclass, jint
 JNIEXPORT void JNICALL PREFIX(_1pop) (JNIEnv *env, jclass, jint vm) {
     vms[vm].run1(OPCODE_POP);
 }
+
+JNIEXPORT void JNICALL PREFIX(flush) (JNIEnv *env, jclass) {
+    std::cout << std::endl;
+}

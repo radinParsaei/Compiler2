@@ -6,7 +6,7 @@ import static com.example.Utils.copyArrays;
 
 public class VMByteCodeGenerator extends Generator {
     private boolean recording = false;
-    private boolean generatePops = true;
+    private Object[] OPCODE_POP = new Object[] { VMWrapper.POP };
     private static final Object[] empty = new Object[0];
 
     public VMByteCodeGenerator(Tool... tools) {
@@ -19,7 +19,18 @@ public class VMByteCodeGenerator extends Generator {
         super(new ScopeTool());
         addTool(tools);
         addTool(new OptimizerTool());
-        this.generatePops = generatePops;
+        if (!generatePops) this.OPCODE_POP = empty;
+    }
+
+    public VMByteCodeGenerator(Object[] pop, Tool... tools) {
+        super(new ScopeTool());
+        addTool(tools);
+        addTool(new OptimizerTool());
+        this.OPCODE_POP = pop;
+    }
+
+    public ScopeTool getScopeTool() {
+        return (ScopeTool) tools.get(0);
     }
 
     private int sizeof(Object[] code) {
@@ -321,14 +332,10 @@ public class VMByteCodeGenerator extends Generator {
 
     @Override
     public Object generatePop(SyntaxTree.Value value) {
-        if (generatePops) {
-            Object[] val = (Object[]) value.evaluateValue(this);
-            Object[] res = new Object[val.length + 1];
-            copyArrays(res, 0, val, new Object[] { VMWrapper.POP });
-            return res;
-        } else {
-            return value.evaluateValue(this);
-        }
+        Object[] val = (Object[]) value.evaluateValue(this);
+        Object[] res = new Object[val.length + OPCODE_POP.length];
+        copyArrays(res, 0, val, OPCODE_POP);
+        return res;
     }
 
     @Override

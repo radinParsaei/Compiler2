@@ -5,9 +5,22 @@ package com.example;
  */
 public class Compiler {
 
-    private final String code;
+    private String code;
 
     public Compiler(String code) {
+        this.code = code;
+        Errors.clear();
+    }
+
+    public Compiler() {
+        Errors.clear();
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
         this.code = code;
     }
 
@@ -15,7 +28,7 @@ public class Compiler {
         return code;
     }
 
-    public void initLexer(Lexer lexer) {
+    public static void initLexer(Lexer lexer) {
         lexer.add("NEWLINE", new NewlineToken());
         // Text
         lexer.add("TXT", new StringLiteralToken());
@@ -67,9 +80,10 @@ public class Compiler {
         lexer.add("ID", "([A-Za-z]*\\d*_*)+");
     }
 
-    public void afterLex(Parser result) {
+    public boolean afterLex(Parser result) {
         // Remove (and book-keep) new lines so that they can be skipped in rules that are not using them.
         result.remove("NEWLINE");
+        return !Errors.wasThereAnError();
     }
 
     public void parse(Parser tokens) {

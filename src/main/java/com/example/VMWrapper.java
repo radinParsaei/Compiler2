@@ -108,6 +108,7 @@ public class VMWrapper {
     private static native double stackTopSliceDouble(int vm, int j, boolean keyOrValue /* when the last item in the stack is a map */);
     private static native byte getTypeOfStackTopSlice(int vm, int j, boolean keyOrValue /* when the last item in the stack is a map */);
     private static native void _pop(int vm);
+    public static native void flush();
 
     /**
      * Get the item in the top of vm's stack

@@ -19,6 +19,7 @@ public class Parser {
 
 	private Parser parent = null;
 	private CheckerLambda checker;
+	private int ignore = 0;
 
 	public interface CompilerLambda {
 		SyntaxTree.Block run(Parser tokens);
@@ -71,13 +72,19 @@ public class Parser {
 		String map = " " + this.getMap(includedRemovedObjects) + " ";
 		Pattern	pattern = Pattern.compile(" " + model + " ");
 		Matcher matcher = pattern.matcher(map);
-		if (!matcher.find()) {
-			return ;
-		}
+		int exclude = ignore;
+		do {
+			if (!matcher.find()) {
+				return ;
+			}
+		} while (--exclude > 0);
 		String matched = matcher.group(0).substring(1);
 		map = map.substring(1);
-		int index;
-		index = map.indexOf(matched);
+		int index = map.indexOf(matched);
+		exclude = ignore - 1;
+		while (exclude-- > 0) {
+			index = map.indexOf(matched, index + 1);
+		}
 		int listIndex = 0;
 		for (int i = 0; i < index; i++) {
 			if (map.charAt(i) == ' ') {
@@ -87,7 +94,12 @@ public class Parser {
 				if (map.indexOf(included1, i) == i) listIndex--;
 			}
 		}
-		if (checker != null && !checker.matches(this, listIndex)) return;
+		if (checker != null && !checker.matches(this, listIndex)) {
+			ignore++;
+			this.replace(model, newName, lambda);
+			ignore--;
+			return;
+		}
 		StringBuilder text = null;
 		if (saveTexts) text = new StringBuilder();
 		int tmp = listIndex;
@@ -186,6 +198,17 @@ public class Parser {
 		int count = 0;
 		for (Token token : tokens) {
 			if (token.getName().equals(name)) count++;
+		}
+		return count;
+	}
+
+	/**
+	 * count tokens that start with a certain pattern
+	 */
+	public int countStartsWith(String name) {
+		int count = 0;
+		for (Token token : tokens) {
+			if (token.getName().startsWith(name)) count++;
 		}
 		return count;
 	}
